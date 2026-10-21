@@ -55,16 +55,17 @@ On the part shared with the other monitor the tab opens by click, and the window
 
 ## Download
 
-1. Get **`EdgeTuck-x.y.z-win-x64.exe`** from [Releases](https://github.com/lojekq/EdgeTuck/releases/latest). Single file, no install, no admin.
-2. Smaller build: `EdgeTuck-x.y.z-win-x64-fd.zip` (needs [.NET Desktop Runtime 10](https://dotnet.microsoft.com/download/dotnet/10.0)).
+1. **[Download EdgeTuck.exe](https://github.com/lojekq/EdgeTuck/releases/latest/download/EdgeTuck.exe)** (latest release). One file, no admin rights.
+2. Smaller build: [`EdgeTuck-fd.zip`](https://github.com/lojekq/EdgeTuck/releases/latest/download/EdgeTuck-fd.zip) (needs [.NET Desktop Runtime 10](https://dotnet.microsoft.com/download/dotnet/10.0)).
 3. Optional check: `gh attestation verify <file> -R lojekq/EdgeTuck` or compare with `SHA256SUMS.txt`.
 
 Requirements: Windows 11 x64. Windows 10 22H2 should work but is not tested.
 
 ## First run
 
-Put the exe into a permanent folder first, for example `%LOCALAPPDATA%\Programs\EdgeTuck\`: autostart and the shortcut point to it.
-On the first start Windows may show a SmartScreen warning (see FAQ). The app then lives in the tray; turn on **Start with Windows** in Settings.
+Run the downloaded exe from anywhere. Windows may show a SmartScreen warning first (see FAQ).
+Edge Tuck offers to install itself: **Install** copies it to `%LOCALAPPDATA%\Programs\EdgeTuck\`, adds a Start menu shortcut, autostart and an entry in Settings → Apps; no admin rights.
+**Run without installing** keeps it portable. To update, run a newer exe the same way: tucked windows come back on screen, the new version replaces the old one and starts.
 Try it: click a window and press `Ctrl+Win+Alt+←`, then point at the tab on the left edge.
 
 | Do this | And this happens |
@@ -94,8 +95,9 @@ Try it: click a window and press `Ctrl+Win+Alt+←`, then point at the tab on th
 | Tab with the program's icon | off | A wider tab with the icon |
 | Rules | none | "Always tuck this program here", from a tab's menu or a template (scrcpy, Discord, Spotify, Windows Terminal); title filter, minimum size, own key |
 | Language, theme | Windows | English or Russian, light or dark |
-| Start with Windows | off | Rules work while Edge Tuck runs |
-| Start menu shortcut | on when the exe is in `%LOCALAPPDATA%\Programs\EdgeTuck\` | |
+| Start with Windows | on after install | Rules work while Edge Tuck runs |
+| Start menu shortcut | on after install | |
+| Installation | — | Install, or Uninstall when installed |
 | Check for updates | on | Once a day asks GitHub about a new release |
 
 Settings, the journal of tucked windows (`tucked.json`) and logs live in `%APPDATA%\EdgeTuck`. The tray menu has **Pause**: it returns every window and turns the gesture and rules off.
@@ -129,13 +131,14 @@ Smart App Control, if it is on, blocks unsigned files with no way to allow one; 
 
 <details><summary>My antivirus flags it</summary>
 
-It is a false positive: the app has no installer, no packer and no obfuscation, and it uses no keyboard or mouse hooks. Please report it to your antivirus vendor
+It is a false positive: the app has no packer and no obfuscation, installs only into your user folder and uses no keyboard or mouse hooks. Please report it to your antivirus vendor
 and open an issue with the detection name and the SHA256 of the file.
 </details>
 
 <details><summary>How do I uninstall?</summary>
 
-Tray → **Return all windows**, then About → **Remove data and autostart**, then delete the exe.
+Settings → **Uninstall**, or Windows Settings → Apps → Edge Tuck → Uninstall: tucked windows come back on screen first, and you choose whether settings and logs go too.
+Without installing: About → **Remove data and autostart**, then delete the exe.
 </details>
 
 ## Privacy

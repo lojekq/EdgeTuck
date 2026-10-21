@@ -430,6 +430,26 @@ public static class TuckManager
         Log.Info($"untucked {t.Program}");
     }
 
+    /// <summary>
+    /// Uninstall and "Remove data": the live tucked windows back (when this process tucks), then whatever a crashed copy left in the
+    /// journal (the uninstaller is its own process and never started tucking).
+    /// </summary>
+    public static void ReturnEverything()
+    {
+        if (started) RestoreAll();
+        if (Demo) return;
+        try
+        {
+            var j = Journal.Load(Journal.FilePath);
+            if (j.Windows.Count == 0) return;
+            var n = Restore.Entries(j.Windows);
+            j.Windows.Clear();
+            Journal.Save(Journal.FilePath, j);
+            Log.Info($"before removal: {n} window(s) left in the journal returned");
+        }
+        catch (Exception e) { Log.Error("journal not restored before removal", e); }
+    }
+
     /// <summary>Every tucked window back on screen, synchronously, no slides. Idempotent. Returns how many.</summary>
     public static int RestoreAll()
     {
