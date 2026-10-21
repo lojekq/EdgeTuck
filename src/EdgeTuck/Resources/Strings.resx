@@ -7,7 +7,6 @@
   <data name="Tray.Open" xml:space="preserve"><value>Open</value></data>
   <data name="Tray.Exit" xml:space="preserve"><value>Exit</value></data>
   <data name="Tray.Hidden" xml:space="preserve"><value>Still running in the notification area. To quit, right-click the icon and choose Exit.</value></data>
-  <data name="Page.Main" xml:space="preserve"><value>Home</value></data>
   <data name="Page.Settings" xml:space="preserve"><value>Settings</value></data>
   <data name="Page.About" xml:space="preserve"><value>About</value></data>
   <data name="Settings.Language" xml:space="preserve"><value>Language</value></data>
@@ -43,13 +42,61 @@ Open the folder?</value></data>
   <data name="Hotkey.Placeholder" xml:space="preserve"><value>Press a key combination</value></data>
   <data name="Hotkey.Busy" xml:space="preserve"><value>Taken by another program</value></data>
   <data name="Hotkey.Failed" xml:space="preserve"><value>Could not register</value></data>
-  <data name="Sample.Hotkey" xml:space="preserve"><value>Hotkey to show the window</value></data>
-  <data name="Main.Title" xml:space="preserve"><value>Tasks</value></data>
-  <data name="Main.Subtitle" xml:space="preserve"><value>Sample page of the template. Replace it with the app's own pages.</value></data>
-  <data name="Main.Empty" xml:space="preserve"><value>Nothing here yet.</value></data>
-  <data name="Demo.Build" xml:space="preserve"><value>Project build</value></data>
-  <data name="Demo.Dataset" xml:space="preserve"><value>Dataset download</value></data>
-  <data name="Demo.Report" xml:space="preserve"><value>Report for Alex</value></data>
-  <data name="Demo.Daily" xml:space="preserve"><value>every day at 6 PM</value></data>
-  <data name="Demo.Backup" xml:space="preserve"><value>Nightly backup</value></data>
+  <data name="Page.Windows" xml:space="preserve"><value>Windows</value></data>
+  <data name="Page.Rules" xml:space="preserve"><value>Rules</value></data>
+  <data name="Windows.Subtitle" xml:space="preserve"><value>Windows tucked behind a screen edge. Hover the tab on the edge to peek, click it to use the window.</value></data>
+  <data name="Windows.Paused" xml:space="preserve"><value>Paused: gesture and rules are off</value></data>
+  <data name="Windows.Resume" xml:space="preserve"><value>Resume</value></data>
+  <data name="Windows.Empty" xml:space="preserve"><value>Press Ctrl+Win+Alt+→ or drag a window past the edge of the screen.</value></data>
+  <data name="Windows.Show" xml:space="preserve"><value>Show</value></data>
+  <data name="Windows.Return" xml:space="preserve"><value>Return</value></data>
+  <data name="Windows.Remember" xml:space="preserve"><value>Remember as rule</value></data>
+  <data name="Rules.Subtitle" xml:space="preserve"><value>A program with a rule tucks itself to its edge when its window opens. Make one from a tab's menu or the Windows page.</value></data>
+  <data name="Rules.Empty" xml:space="preserve"><value>No rules yet. Right-click a tab and choose "Always tuck … here".</value></data>
+  <data name="Rules.AutoTuck" xml:space="preserve"><value>Tuck when it opens</value></data>
+  <data name="Rules.Enabled" xml:space="preserve"><value>On</value></data>
+  <data name="Rules.Delete" xml:space="preserve"><value>Delete rule</value></data>
+  <data name="Edge.Left" xml:space="preserve"><value>left</value></data>
+  <data name="Edge.Top" xml:space="preserve"><value>top</value></data>
+  <data name="Edge.Right" xml:space="preserve"><value>right</value></data>
+  <data name="Edge.Bottom" xml:space="preserve"><value>bottom</value></data>
+  <data name="State.Parked" xml:space="preserve"><value>tucked</value></data>
+  <data name="State.Out" xml:space="preserve"><value>peeking</value></data>
+  <data name="State.OutPinned" xml:space="preserve"><value>in use</value></data>
+  <data name="Settings.Hotkeys" xml:space="preserve"><value>Shortcuts</value></data>
+  <data name="Settings.Hotkey.Left" xml:space="preserve"><value>Tuck to the left edge</value></data>
+  <data name="Settings.Hotkey.Top" xml:space="preserve"><value>Tuck to the top edge</value></data>
+  <data name="Settings.Hotkey.Right" xml:space="preserve"><value>Tuck to the right edge</value></data>
+  <data name="Settings.Hotkey.Bottom" xml:space="preserve"><value>Tuck to the bottom edge</value></data>
+  <data name="Settings.Hotkey.RestoreAll" xml:space="preserve"><value>Return all windows (emergency)</value></data>
+  <data name="Settings.SlideOut" xml:space="preserve"><value>Slide out after hovering the tab</value></data>
+  <data name="Settings.SlideIn" xml:space="preserve"><value>Slide back after the mouse leaves</value></data>
+  <data name="Settings.Animation" xml:space="preserve"><value>Slide animation</value></data>
+  <data name="Settings.Animation.Note" xml:space="preserve"><value>0 = instant</value></data>
+  <data name="Settings.Tab" xml:space="preserve"><value>Tab size</value></data>
+  <data name="Settings.Gesture" xml:space="preserve"><value>Drag past the edge to tuck</value></data>
+  <data name="Settings.Gesture.Note" xml:space="preserve"><value>Left, right and bottom edges; this much of the window must be behind the edge</value></data>
+  <data name="Settings.Fullscreen" xml:space="preserve"><value>Hide tabs while a fullscreen app is in front</value></data>
+  <data name="Settings.Fullscreen.Note" xml:space="preserve"><value>Games and fullscreen video: tabs on that monitor disappear, a peeking window slides back</value></data>
+  <data name="Toast.Recovered" xml:space="preserve"><value>{0} window(s) left behind the edge last time are back on screen.</value></data>
+  <data name="Toast.RestoredAll" xml:space="preserve"><value>Windows returned to the screen: {0}.</value></data>
+  <data name="Toast.HotkeyBusy" xml:space="preserve"><value>The shortcut {0} is taken by another program.</value></data>
+  <data name="Toast.SharedEdge" xml:space="preserve"><value>This edge is shared with another monitor. Tuck the window to an outer edge.</value></data>
+  <data name="Toast.TooLong" xml:space="preserve"><value>The window does not fit on the free part of the edge: {0} px free.</value></data>
+  <data name="Toast.TooBig" xml:space="preserve"><value>The window is larger than the screen.</value></data>
+  <data name="Toast.Admin" xml:space="preserve"><value>The window runs as administrator: Edge Tuck cannot move it.</value></data>
+  <data name="Toast.Refused" xml:space="preserve"><value>The window would not move, so it stays where it is.</value></data>
+  <data name="Toast.Hung" xml:space="preserve"><value>The window is not responding.</value></data>
+  <data name="Toast.Fights" xml:space="preserve"><value>The window keeps moving itself, so it is back on screen.</value></data>
+  <data name="Toast.MonitorsChanged" xml:space="preserve"><value>Monitors changed: {0} window(s) returned to the screen.</value></data>
+  <data name="Toast.FirstRule" xml:space="preserve"><value>Rules work while Edge Tuck runs. Turn on Start with Windows in Settings.</value></data>
+  <data name="Tray.RestoreAll" xml:space="preserve"><value>Return all windows</value></data>
+  <data name="Tray.Pause" xml:space="preserve"><value>Pause</value></data>
+  <data name="Tab.Return" xml:space="preserve"><value>Return window</value></data>
+  <data name="Tab.AlwaysHere" xml:space="preserve"><value>Always tuck {0} here</value></data>
+  <data name="Tab.ForgetRule" xml:space="preserve"><value>Forget the rule for {0}</value></data>
+  <data name="Lost.Title" xml:space="preserve"><value>If a window got lost</value></data>
+  <data name="Lost.Restart" xml:space="preserve"><value>Start Edge Tuck again: it brings the windows back by itself.</value></data>
+  <data name="Lost.Keys" xml:space="preserve"><value>Or pick the window with Alt+Tab and press Win+← or Win+→.</value></data>
+  <data name="Lost.Move" xml:space="preserve"><value>Or press Alt+Space → Move, press an arrow key and move the mouse.</value></data>
 </root>

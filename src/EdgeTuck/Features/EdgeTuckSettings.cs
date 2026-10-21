@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 using EdgeTuck.Features;
+using EdgeTuck.Shell;
 
 namespace EdgeTuck.Shell
 {
@@ -61,6 +63,8 @@ namespace EdgeTuck.Features
         public double Along { get; set; } = 0.5;
         public bool AutoTuck { get => autoTuck; set { autoTuck = value; Changed(); } }
         public bool Enabled { get => enabled; set { enabled = value; Changed(); } }
+
+        [JsonIgnore] public string Detail => $"{Loc.T("Edge." + Edge)} · {(Monitor is null ? "" : Tucked.MonitorName(Monitor))}";
 
         public event PropertyChangedEventHandler? PropertyChanged;
         void Changed([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new(p));

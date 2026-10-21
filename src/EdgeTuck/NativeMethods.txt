@@ -64,3 +64,5 @@ MonitorFromRect
 MonitorFromWindow
 SetWindowLong
 WM_DPICHANGED
+ShowWindow
+WINDOW_STYLE

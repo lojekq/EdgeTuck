@@ -3,7 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:l="clr-namespace:EdgeTuck.Shell"
-                 xmlns:f="clr-namespace:EdgeTuck.Features"
+                 xmlns:p="clr-namespace:EdgeTuck.Pages"
                  Title="{x:Static l:AppInfo.DisplayName}" Width="1100" Height="700" MinWidth="720" MinHeight="480"
                  ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica" WindowStartupLocation="CenterScreen">
     <Grid>
@@ -31,8 +31,10 @@
         <ui:NavigationView x:Name="Nav" Grid.Row="2" PaneDisplayMode="Left" IsBackButtonVisible="Collapsed"
                            IsPaneToggleVisible="False" OpenPaneLength="220">
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="{l:T Page.Main}" Icon="{ui:SymbolIcon Home24}"
-                                       TargetPageType="{x:Type f:MainPage}" TargetPageTag="main" />
+                <ui:NavigationViewItem Content="{l:T Page.Windows}" Icon="{ui:SymbolIcon PanelLeftContract24}"
+                                       TargetPageType="{x:Type p:WindowsPage}" TargetPageTag="windows" />
+                <ui:NavigationViewItem Content="{l:T Page.Rules}" Icon="{ui:SymbolIcon AppsListDetail24}"
+                                       TargetPageType="{x:Type p:RulesPage}" TargetPageTag="rules" />
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
                 <ui:NavigationViewItem Content="{l:T Page.Settings}" Icon="{ui:SymbolIcon Settings24}"

@@ -34,12 +34,12 @@ public partial class App : Application
         Loc.Apply(Settings.Current.Language);
         Log.Info($"start {AppInfo.Version}{(a.Unknown.Count > 0 ? $", {a.Unknown.Count} unknown argument(s)" : "")}");
 
-        if (a.Demo) DemoData.Fill();
+        if (a.Demo) DemoData.Fill(); // fake windows and rules; the windows are tucked once the dispatcher runs
         else if (Install.IsInstalled) InstalledStart(); // Debug builds and exes in Downloads write nothing by themselves
 
-        // App features: services, hotkeys, tray items, settings section (template sample below)
-        SettingsPage.AppSection = SampleSettings.Create;
-        SampleSettings.Apply();
+        // Edge Tuck: crash leftovers back, guard, hooks, hotkeys, rules (plan 04 §5 "Запуск")
+        SettingsPage.AppSection = Pages.SettingsSection.Create;
+        TuckManager.Start();
 
         window = new MainWindow();
         if (a.Width > 0) (window.Width, window.Height) = (a.Width, a.Height);
@@ -54,9 +54,13 @@ public partial class App : Application
             Settings.Save();
             Tray.Notify(AppInfo.DisplayName, Loc.T("Tray.Hidden"));
         };
-        Capture.Attach(window, () => { if (a.Autoplay) Autoplay.Start(window); });
+        Capture.Attach(window, () => { });
 
-        if (a.Screenshot is null) Tray.Create(ShowMain, () => Quit());
+        if (a.Screenshot is null)
+        {
+            Tray.Create(ShowMain, () => Quit(), TrayMenu.Items());
+            TrayMenu.Attach();
+        }
         SessionEnding += (_, _) => RaiseExiting();
         Updates.Found += (version, url) =>
         {
@@ -68,7 +72,7 @@ public partial class App : Application
         };
         Updates.Start();
 
-        if (!a.Background) ShowMain(a.Page);
+        if (!a.Background && !a.Autoplay) ShowMain(a.Page); // the scene GIF is the desktop, not this window
     }
 
     public static void ShowMain(string? page)

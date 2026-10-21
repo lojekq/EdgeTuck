@@ -1,0 +1,98 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Threading;
+
+namespace EdgeTuck.Features;
+
+/// <summary>
+/// The thin accent tab on the edge, one per tucked window: topmost, never activated, not in Alt+Tab or the taskbar.
+/// Placed in physical px with SetWindowPos (Geometry.Tabs), not with WPF Left/Top.
+/// </summary>
+public sealed class TabWindow : Window
+{
+    const int WM_MOUSEACTIVATE = 0x0021, MA_NOACTIVATE = 3, WM_DPICHANGED = 0x02E0;
+
+    readonly Border bar = new() { Opacity = 0.7 };
+    readonly DispatcherTimer hover = new();
+    System.Drawing.Rectangle placed;
+
+    public nint Handle { get; private set; }
+
+    /// <summary>The mouse rested on the tab for the slide-out delay with no button down.</summary>
+    public event Action? Hovered;
+    public event Action? Clicked;
+    /// <summary>The tab moved to a monitor with another DPI or the DPI changed: relayout.</summary>
+    public event Action? DpiMoved;
+    /// <summary>Right click: the menu is built at that moment (rules change).</summary>
+    public Func<ContextMenu>? Menu;
+
+    public TabWindow()
+    {
+        WindowStyle = WindowStyle.None;
+        ResizeMode = ResizeMode.NoResize;
+        AllowsTransparency = true;
+        Background = Brushes.Transparent;
+        ShowInTaskbar = false;
+        ShowActivated = false;
+        Topmost = true;
+        Width = 6; Height = 64; Left = -32000; Top = -32000; // real place comes from Place()
+        bar.SetResourceReference(Border.BackgroundProperty, "SystemAccentBrush");
+        Content = bar;
+
+        SourceInitialized += (_, _) =>
+        {
+            Handle = new WindowInteropHelper(this).Handle;
+            Win.MakeTab(Handle);
+            HwndSource.FromHwnd(Handle).AddHook(WndProc);
+            if (!placed.IsEmpty) Win.PlaceTab(Handle, placed);
+        };
+        hover.Tick += (_, _) =>
+        {
+            hover.Stop();
+            if (IsMouseOver && !Win.AnyButtonDown) Hovered?.Invoke();
+        };
+        MouseEnter += (_, _) =>
+        {
+            bar.Opacity = 1;
+            hover.Interval = TimeSpan.FromMilliseconds(Math.Max(1, Shell.Settings.Current.EdgeTuck.SlideOutDelayMs));
+            hover.Start();
+        };
+        MouseLeave += (_, _) => { bar.Opacity = 0.7; hover.Stop(); };
+        MouseLeftButtonUp += (_, _) => { hover.Stop(); Clicked?.Invoke(); };
+        MouseRightButtonUp += (_, e) =>
+        {
+            e.Handled = true;
+            hover.Stop();
+            if (Menu?.Invoke() is not { } menu) return;
+            menu.PlacementTarget = this;
+            menu.IsOpen = true;
+        };
+    }
+
+    /// <summary>Hover look without the mouse, for --demo screenshots.</summary>
+    public bool Lit { set => bar.Opacity = value ? 1 : 0.7; }
+
+    public void Place(System.Drawing.Rectangle r)
+    {
+        placed = r;
+        if (Handle != 0) Win.PlaceTab(Handle, r);
+    }
+
+    nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
+    {
+        switch (msg)
+        {
+            case WM_MOUSEACTIVATE:
+                handled = true;
+                return MA_NOACTIVATE;
+            case WM_DPICHANGED:
+                handled = true; // our own size comes from Geometry.Tabs, not from WPF's suggested rectangle
+                Dispatcher.BeginInvoke(() => DpiMoved?.Invoke());
+                return 0;
+        }
+        return 0;
+    }
+}

@@ -51,6 +51,17 @@ public static unsafe class Win
         return PInvoke.SetWindowPos((HWND)h, default /* HWND_TOP; ignored with SWP_NOZORDER */, p.X + w.Left - f.Left, p.Y + w.Top - f.Top, 0, 0, flags);
     }
 
+    /// <summary>Synchronous restore of a maximized window before tucking (the window is checked not to be hung first).</summary>
+    public static void RestoreNow(nint h) => PInvoke.ShowWindow((HWND)h, SHOW_WINDOW_CMD.SW_RESTORE);
+
+    public static bool IsToolWindow(nint h) =>
+        ((WINDOW_EX_STYLE)PInvoke.GetWindowLong((HWND)h, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE)).HasFlag(WINDOW_EX_STYLE.WS_EX_TOOLWINDOW);
+
+    /// <summary>A dialog rather than a tooltip or menu: has a caption, or is the standard dialog class.</summary>
+    public static bool IsDialogLike(nint h) =>
+        !IsToolWindow(h) && (((WINDOW_STYLE)PInvoke.GetWindowLong((HWND)h, WINDOW_LONG_PTR_INDEX.GWL_STYLE) & WINDOW_STYLE.WS_CAPTION) == WINDOW_STYLE.WS_CAPTION
+            || TopWindows.ClassOf(h) == "#32770");
+
     public static void ShowNoActivate(nint h) => PInvoke.ShowWindowAsync((HWND)h, SHOW_WINDOW_CMD.SW_SHOWNOACTIVATE);
     public static void Restore(nint h) => PInvoke.ShowWindowAsync((HWND)h, SHOW_WINDOW_CMD.SW_RESTORE);
     public static void Maximize(nint h) => PInvoke.ShowWindowAsync((HWND)h, SHOW_WINDOW_CMD.SW_MAXIMIZE);
@@ -126,6 +137,10 @@ public static unsafe class Win
         ex |= WINDOW_EX_STYLE.WS_EX_NOACTIVATE | WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
         PInvoke.SetWindowLong((HWND)h, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)ex);
     }
+
+    /// <summary>--autoplay backdrop: top of the normal windows, not topmost, not activated.</summary>
+    public static void PlaceOnTop(nint h, Rectangle r) =>
+        PInvoke.SetWindowPos((HWND)h, default, r.X, r.Y, r.Width, r.Height, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
 
     /// <summary>Our own tab window: topmost, physical px, never activated.</summary>
     public static void PlaceTab(nint h, Rectangle r) =>

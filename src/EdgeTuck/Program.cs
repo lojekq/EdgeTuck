@@ -9,6 +9,7 @@ public static class Program
     // Example: ["--snapshot"] = Snapshot.Run,
     internal static readonly Dictionary<string, Func<string[], int>> Verbs = new()
     {
+        ["--guard"] = Features.GuardMode.Run, // brings the windows back if this process dies (plan 04 §8)
     };
 
     [STAThread]

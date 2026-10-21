@@ -7,7 +7,6 @@
   <data name="Tray.Open" xml:space="preserve"><value>Открыть</value></data>
   <data name="Tray.Exit" xml:space="preserve"><value>Выход</value></data>
   <data name="Tray.Hidden" xml:space="preserve"><value>Программа продолжает работать в области уведомлений. Чтобы выйти, щёлкните значок правой кнопкой и выберите «Выход».</value></data>
-  <data name="Page.Main" xml:space="preserve"><value>Главная</value></data>
   <data name="Page.Settings" xml:space="preserve"><value>Настройки</value></data>
   <data name="Page.About" xml:space="preserve"><value>О программе</value></data>
   <data name="Settings.Language" xml:space="preserve"><value>Язык</value></data>
@@ -43,13 +42,61 @@
   <data name="Hotkey.Placeholder" xml:space="preserve"><value>Нажмите сочетание клавиш</value></data>
   <data name="Hotkey.Busy" xml:space="preserve"><value>Занято другой программой</value></data>
   <data name="Hotkey.Failed" xml:space="preserve"><value>Не удалось зарегистрировать</value></data>
-  <data name="Sample.Hotkey" xml:space="preserve"><value>Сочетание клавиш для окна</value></data>
-  <data name="Main.Title" xml:space="preserve"><value>Задачи</value></data>
-  <data name="Main.Subtitle" xml:space="preserve"><value>Пример страницы шаблона. Замените её страницами программы.</value></data>
-  <data name="Main.Empty" xml:space="preserve"><value>Пока пусто.</value></data>
-  <data name="Demo.Build" xml:space="preserve"><value>Сборка проекта</value></data>
-  <data name="Demo.Dataset" xml:space="preserve"><value>Загрузка датасета</value></data>
-  <data name="Demo.Report" xml:space="preserve"><value>Отчёт для Alex</value></data>
-  <data name="Demo.Daily" xml:space="preserve"><value>каждый день в 18:00</value></data>
-  <data name="Demo.Backup" xml:space="preserve"><value>Ночная копия</value></data>
+  <data name="Page.Windows" xml:space="preserve"><value>Окна</value></data>
+  <data name="Page.Rules" xml:space="preserve"><value>Правила</value></data>
+  <data name="Windows.Subtitle" xml:space="preserve"><value>Окна, спрятанные за край экрана. Наведите мышь на язычок, чтобы окно выехало, щёлкните, чтобы работать с ним.</value></data>
+  <data name="Windows.Paused" xml:space="preserve"><value>Пауза: жест и правила выключены</value></data>
+  <data name="Windows.Resume" xml:space="preserve"><value>Продолжить</value></data>
+  <data name="Windows.Empty" xml:space="preserve"><value>Нажмите Ctrl+Win+Alt+→ или утащите окно за край экрана.</value></data>
+  <data name="Windows.Show" xml:space="preserve"><value>Показать</value></data>
+  <data name="Windows.Return" xml:space="preserve"><value>Вернуть</value></data>
+  <data name="Windows.Remember" xml:space="preserve"><value>Запомнить как правило</value></data>
+  <data name="Rules.Subtitle" xml:space="preserve"><value>Программа с правилом сама прячется к своему краю, когда открывается её окно. Правило создаётся из меню язычка или на странице «Окна».</value></data>
+  <data name="Rules.Empty" xml:space="preserve"><value>Правил пока нет. Щёлкните язычок правой кнопкой и выберите «Всегда прятать … сюда».</value></data>
+  <data name="Rules.AutoTuck" xml:space="preserve"><value>Прятать при появлении</value></data>
+  <data name="Rules.Enabled" xml:space="preserve"><value>Вкл</value></data>
+  <data name="Rules.Delete" xml:space="preserve"><value>Удалить правило</value></data>
+  <data name="Edge.Left" xml:space="preserve"><value>слева</value></data>
+  <data name="Edge.Top" xml:space="preserve"><value>сверху</value></data>
+  <data name="Edge.Right" xml:space="preserve"><value>справа</value></data>
+  <data name="Edge.Bottom" xml:space="preserve"><value>снизу</value></data>
+  <data name="State.Parked" xml:space="preserve"><value>спрятано</value></data>
+  <data name="State.Out" xml:space="preserve"><value>выехало</value></data>
+  <data name="State.OutPinned" xml:space="preserve"><value>закреплено</value></data>
+  <data name="Settings.Hotkeys" xml:space="preserve"><value>Сочетания клавиш</value></data>
+  <data name="Settings.Hotkey.Left" xml:space="preserve"><value>Спрятать к левому краю</value></data>
+  <data name="Settings.Hotkey.Top" xml:space="preserve"><value>Спрятать к верхнему краю</value></data>
+  <data name="Settings.Hotkey.Right" xml:space="preserve"><value>Спрятать к правому краю</value></data>
+  <data name="Settings.Hotkey.Bottom" xml:space="preserve"><value>Спрятать к нижнему краю</value></data>
+  <data name="Settings.Hotkey.RestoreAll" xml:space="preserve"><value>Вернуть все окна (аварийно)</value></data>
+  <data name="Settings.SlideOut" xml:space="preserve"><value>Выезжать после наведения на язычок</value></data>
+  <data name="Settings.SlideIn" xml:space="preserve"><value>Уезжать после ухода мыши</value></data>
+  <data name="Settings.Animation" xml:space="preserve"><value>Анимация</value></data>
+  <data name="Settings.Animation.Note" xml:space="preserve"><value>0 = мгновенно</value></data>
+  <data name="Settings.Tab" xml:space="preserve"><value>Размер язычка</value></data>
+  <data name="Settings.Gesture" xml:space="preserve"><value>Прятать, если утащить окно за край</value></data>
+  <data name="Settings.Gesture.Note" xml:space="preserve"><value>Левый, правый и нижний края; такая часть окна должна оказаться за краем</value></data>
+  <data name="Settings.Fullscreen" xml:space="preserve"><value>Скрывать язычки при полноэкранных окнах</value></data>
+  <data name="Settings.Fullscreen.Note" xml:space="preserve"><value>Игры и видео на весь экран: язычки этого монитора скрываются, выехавшее окно уезжает</value></data>
+  <data name="Toast.Recovered" xml:space="preserve"><value>Окна, оставшиеся за краем с прошлого раза, возвращены на экран: {0}.</value></data>
+  <data name="Toast.RestoredAll" xml:space="preserve"><value>Окна возвращены на экран: {0}.</value></data>
+  <data name="Toast.HotkeyBusy" xml:space="preserve"><value>Сочетание {0} занято другой программой.</value></data>
+  <data name="Toast.SharedEdge" xml:space="preserve"><value>Этот край общий с другим монитором. Спрячьте окно к внешнему краю.</value></data>
+  <data name="Toast.TooLong" xml:space="preserve"><value>Окно не помещается на свободной части края: свободно {0} px.</value></data>
+  <data name="Toast.TooBig" xml:space="preserve"><value>Окно больше экрана.</value></data>
+  <data name="Toast.Admin" xml:space="preserve"><value>Окно запущено от администратора: Edge Tuck не может его двигать.</value></data>
+  <data name="Toast.Refused" xml:space="preserve"><value>Окно не дало себя сдвинуть и осталось на месте.</value></data>
+  <data name="Toast.Hung" xml:space="preserve"><value>Окно не отвечает.</value></data>
+  <data name="Toast.Fights" xml:space="preserve"><value>Окно само двигается обратно, поэтому оно возвращено на экран.</value></data>
+  <data name="Toast.MonitorsChanged" xml:space="preserve"><value>Мониторы изменились: окна возвращены на экран: {0}.</value></data>
+  <data name="Toast.FirstRule" xml:space="preserve"><value>Правила работают, пока запущен Edge Tuck. Включите автозапуск в настройках.</value></data>
+  <data name="Tray.RestoreAll" xml:space="preserve"><value>Вернуть все окна</value></data>
+  <data name="Tray.Pause" xml:space="preserve"><value>Пауза</value></data>
+  <data name="Tab.Return" xml:space="preserve"><value>Вернуть окно</value></data>
+  <data name="Tab.AlwaysHere" xml:space="preserve"><value>Всегда прятать {0} сюда</value></data>
+  <data name="Tab.ForgetRule" xml:space="preserve"><value>Забыть правило для {0}</value></data>
+  <data name="Lost.Title" xml:space="preserve"><value>Если окно потерялось</value></data>
+  <data name="Lost.Restart" xml:space="preserve"><value>Запустите Edge Tuck снова: он вернёт окна сам.</value></data>
+  <data name="Lost.Keys" xml:space="preserve"><value>Или выберите окно через Alt+Tab и нажмите Win+← или Win+→.</value></data>
+  <data name="Lost.Move" xml:space="preserve"><value>Или нажмите Alt+Space → «Переместить», стрелку и двигайте мышью.</value></data>
 </root>
