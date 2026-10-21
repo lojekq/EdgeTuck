@@ -42,3 +42,25 @@ CoTaskMemFree
 WINEVENT_OUTOFCONTEXT
 WINEVENT_SKIPOWNPROCESS
 UNICODE_STRING
+// Edge Tuck: moving other windows (position, z-order, show state only, plan 04 §8), cursor, foreground
+SetWindowPos
+GetWindowRect
+IsZoomed
+IsIconic
+IsHungAppWindow
+IsWindow
+ShowWindowAsync
+GetWindowPlacement
+SetWindowPlacement
+GetForegroundWindow
+SetForegroundWindow
+GetAncestor
+WindowFromPoint
+GetCursorPos
+SetCursorPos
+GetAsyncKeyState
+GetShellWindow
+MonitorFromRect
+MonitorFromWindow
+SetWindowLong
+WM_DPICHANGED

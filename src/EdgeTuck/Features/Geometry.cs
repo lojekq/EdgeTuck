@@ -1,0 +1,229 @@
+using System.Drawing;
+using System.Text.Json.Serialization;
+using EdgeTuck.Shell;
+
+namespace EdgeTuck.Features;
+
+[JsonConverter(typeof(JsonStringEnumConverter<Edge>))]
+public enum Edge { Left, Top, Right, Bottom }
+
+/// <summary>A piece of an edge on its own axis (y for Left/Right, x for Top/Bottom), [Start, End).</summary>
+public readonly record struct Segment(int Start, int End)
+{
+    public int Length => End - Start;
+}
+
+public enum TuckFail { None, SharedEdge, TooLong, TooBig }
+
+/// <summary>Frame rectangles (DWMWA_EXTENDED_FRAME_BOUNDS) of a tucked window: on screen and behind the edge.</summary>
+public sealed record TuckPlan(Display Monitor, Edge Edge, Rectangle Shown, Rectangle Parked, Segment Segment);
+
+/// <summary>Plan, or why not; FreePx is the longest free segment for TooLong.</summary>
+public readonly record struct TuckResult(TuckPlan? Plan, TuckFail Fail, int FreePx = 0);
+
+/// <summary>
+/// Pure geometry, physical pixels, no Win32 (plan 04 §5). Monitors come as a list, so every layout is a test.
+/// </summary>
+public static class Geometry
+{
+    // ponytail: parkGap and m are physical px, not DIP; if a shadow shows through at 200 % and up, derive them from the monitor DPI
+    /// <summary>Gap between a parked window and its own monitor: the DWM shadow must not show.</summary>
+    public const int ParkGap = 64;
+    /// <summary>Minimal distance from a parked window to any other monitor, so the nearest monitor (and the DPI) stays its own.</summary>
+    public const int Margin = 80;
+
+    public static readonly Edge[] Edges = [Edge.Left, Edge.Top, Edge.Right, Edge.Bottom];
+
+    public static bool IsVertical(Edge e) => e is Edge.Left or Edge.Right;
+
+    /// <summary>The extent of r along the edge's own axis.</summary>
+    public static Segment Along(Rectangle r, Edge e) => IsVertical(e) ? new(r.Top, r.Bottom) : new(r.Left, r.Right);
+
+    /// <summary>Size of a window across the edge: how deep it goes behind it.</summary>
+    public static int Across(Size s, Edge e) => IsVertical(e) ? s.Width : s.Height;
+
+    /// <summary>Behind edge e of m.Bounds, depth deep, along the whole edge.</summary>
+    public static Rectangle ParkingStrip(Display m, Edge e, int depth)
+    {
+        var b = m.Bounds;
+        return e switch
+        {
+            Edge.Left => Rectangle.FromLTRB(b.Left - depth, b.Top, b.Left, b.Bottom),
+            Edge.Right => Rectangle.FromLTRB(b.Right, b.Top, b.Right + depth, b.Bottom),
+            Edge.Top => Rectangle.FromLTRB(b.Left, b.Top - depth, b.Right, b.Top),
+            _ => Rectangle.FromLTRB(b.Left, b.Bottom, b.Right, b.Bottom + depth),
+        };
+    }
+
+    /// <summary>
+    /// Free segments of edge e of m for a parked window depth px deep (ParkGap + its size across the edge), plan 04 §5:
+    /// every other monitor near the parking strip takes its projection ± Margin; what is left, within m's work area, is free.
+    /// 0, 1 or 2 segments, in axis order.
+    /// </summary>
+    public static List<Segment> FreeSegments(IReadOnlyList<Display> monitors, Display m, Edge e, int depth)
+    {
+        var strip = ParkingStrip(m, e, depth);
+        var edge = Along(m.Bounds, e);
+        var work = Along(m.Work, e);
+        var free = new List<Segment> { new(Math.Max(edge.Start, work.Start), Math.Min(edge.End, work.End)) };
+        foreach (var n in monitors)
+        {
+            if (n.Device == m.Device) continue;
+            var near = n.Bounds;
+            near.Inflate(Margin, Margin);
+            if (!near.IntersectsWith(strip)) continue;
+            var taken = Along(near, e);
+            free = free.SelectMany(f => Subtract(f, taken)).ToList();
+        }
+        return free.Where(f => f.Length > 0).ToList();
+    }
+
+    static IEnumerable<Segment> Subtract(Segment f, Segment taken)
+    {
+        if (taken.End <= f.Start || taken.Start >= f.End) { yield return f; yield break; }
+        if (taken.Start > f.Start) yield return new(f.Start, taken.Start);
+        if (taken.End < f.End) yield return new(taken.End, f.End);
+    }
+
+    /// <summary>
+    /// Where frame goes when tucked to edge e of m: the nearest free segment it fits, shifted along the edge as little as possible,
+    /// pressed to the work area; parked is the same rectangle ParkGap behind m's bounds.
+    /// </summary>
+    public static TuckResult Tuck(IReadOnlyList<Display> monitors, Display m, Edge e, Rectangle frame)
+    {
+        var segments = FreeSegments(monitors, m, e, ParkGap + Across(frame.Size, e));
+        if (segments.Count == 0) return new(null, TuckFail.SharedEdge);
+        var workAcross = IsVertical(e) ? m.Work.Width : m.Work.Height;
+        if (Across(frame.Size, e) > workAcross) return new(null, TuckFail.TooBig);
+
+        var along = Along(frame, e);
+        var fits = segments.Where(s => s.Length >= along.Length)
+            .Select(s => (Segment: s, Start: Math.Clamp(along.Start, s.Start, s.End - along.Length)))
+            .OrderBy(x => Math.Abs(x.Start - along.Start))
+            .ToList();
+        if (fits.Count == 0) return new(null, TuckFail.TooLong, segments.Max(s => s.Length));
+        var (segment, start) = fits[0];
+
+        var w = m.Work;
+        var b = m.Bounds;
+        var (width, height) = (frame.Width, frame.Height);
+        var shown = e switch
+        {
+            Edge.Left => new Rectangle(w.Left, start, width, height),
+            Edge.Right => new Rectangle(w.Right - width, start, width, height),
+            Edge.Top => new Rectangle(start, w.Top, width, height),
+            _ => new Rectangle(start, w.Bottom - height, width, height),
+        };
+        var parked = e switch
+        {
+            Edge.Left => shown with { X = b.Left - ParkGap - width },
+            Edge.Right => shown with { X = b.Right + ParkGap },
+            Edge.Top => shown with { Y = b.Top - ParkGap - height },
+            _ => shown with { Y = b.Bottom + ParkGap },
+        };
+        return new(new(m, e, shown, parked, segment), TuckFail.None);
+    }
+
+    /// <summary>The monitor with the largest part of r; if r is on none, the nearest one.</summary>
+    public static Display MonitorOf(Rectangle r, IReadOnlyList<Display> monitors) =>
+        monitors.MaxBy(m => Area(Rectangle.Intersect(r, m.Bounds))) is { } best && Area(Rectangle.Intersect(r, best.Bounds)) > 0
+            ? best
+            : monitors.MinBy(m => Distance(r, m.Bounds))!;
+
+    /// <summary>
+    /// Drag-past-the-edge: at least threshold of the window is behind the left, right or bottom edge of the monitor
+    /// that has most of it, and that part is on no monitor. Never the top (Windows pulls the caption back), never maximized.
+    /// </summary>
+    public static (Display Monitor, Edge Edge)? DragGestureEdge(IReadOnlyList<Display> monitors, Rectangle frame, bool zoomed, double threshold = 0.5)
+    {
+        if (zoomed || frame.Width <= 0 || frame.Height <= 0 || monitors.Count == 0) return null;
+        var m = MonitorOf(frame, monitors);
+        var b = m.Bounds;
+        foreach (var e in new[] { Edge.Left, Edge.Right, Edge.Bottom })
+        {
+            var behind = e switch
+            {
+                Edge.Left => Rectangle.FromLTRB(frame.Left, frame.Top, Math.Min(frame.Right, b.Left), frame.Bottom),
+                Edge.Right => Rectangle.FromLTRB(Math.Max(frame.Left, b.Right), frame.Top, frame.Right, frame.Bottom),
+                _ => Rectangle.FromLTRB(frame.Left, Math.Max(frame.Top, b.Bottom), frame.Right, frame.Bottom),
+            };
+            if (behind.Width <= 0 || behind.Height <= 0) continue;
+            if (Area(behind) < threshold * Area(frame)) continue;
+            if (monitors.Any(n => n.Bounds.IntersectsWith(behind))) continue;
+            return (m, e);
+        }
+        return null;
+    }
+
+    /// <summary>Fullscreen = covers the whole monitor and is not maximized (a maximized window covers it too, with its borders).</summary>
+    public static bool IsFullscreen(Rectangle window, Rectangle monitor, bool zoomed) => !zoomed && window.Contains(monitor);
+
+    /// <summary>
+    /// Slide an Out window back in? Not while pinned, a mouse button is down or the cursor is over a window of the same process,
+    /// nor while it is within margin of the window.
+    /// </summary>
+    public static bool ShouldSlideIn(bool pinned, bool buttonDown, bool overSameProcess, Point cursor, Rectangle shown, int margin)
+    {
+        if (pinned || buttonDown || overSameProcess) return false;
+        shown.Inflate(margin, margin);
+        return !shown.Contains(cursor);
+    }
+
+    /// <summary>DIP → physical px on a monitor (6 DIP at 125 % = 8 px).</summary>
+    public static int Px(int dip, int dpi) => (int)Math.Round(dip * dpi / 96.0, MidpointRounding.AwayFromZero);
+
+    /// <summary>Tab size in DIP: thickness across the edge, length along it; spacing between tabs and from segment ends.</summary>
+    public sealed record TabSize(int Thickness = 6, int Length = 64, int EndMargin = 64, int Gap = 8);
+
+    /// <summary>
+    /// Tabs on one segment of one edge, in px of m: at the work-area edge (above a taskbar), as near the wanted centers as they can be,
+    /// not overlapping, no closer than EndMargin to the segment ends. Same order as wanted.
+    /// </summary>
+    public static Rectangle[] Tabs(Display m, Edge e, Segment segment, IReadOnlyList<int> wantedCenters, TabSize size)
+    {
+        int t = Px(size.Thickness, m.Dpi), len = Px(size.Length, m.Dpi), gap = Px(size.Gap, m.Dpi), end = Px(size.EndMargin, m.Dpi);
+        int lo = segment.Start + end, hi = segment.End - end - len;
+        if (hi < lo) lo = hi = segment.Start + (segment.Length - len) / 2; // segment too short for the margins: center it
+
+        var order = Enumerable.Range(0, wantedCenters.Count).OrderBy(i => wantedCenters[i]).ToArray();
+        var starts = new int[wantedCenters.Count];
+        var prev = int.MinValue;
+        foreach (var i in order) // forward: no overlap, not before lo
+            prev = starts[i] = Math.Max(Math.Max(wantedCenters[i] - len / 2, lo), prev == int.MinValue ? lo : prev + len + gap);
+        var next = int.MaxValue;
+        foreach (var i in order.Reverse()) // backward: not after hi
+            next = starts[i] = Math.Min(starts[i], next == int.MaxValue ? hi : next - len - gap);
+
+        var w = m.Work;
+        return starts.Select(s => e switch
+        {
+            Edge.Left => new Rectangle(w.Left, s, t, len),
+            Edge.Right => new Rectangle(w.Right - t, s, t, len),
+            Edge.Top => new Rectangle(s, w.Top, len, t),
+            _ => new Rectangle(s, w.Bottom - t, len, t),
+        }).ToArray();
+    }
+
+    /// <summary>Chebyshev gap between two rectangles: 0 when they touch or overlap.</summary>
+    public static int Distance(Rectangle a, Rectangle b) =>
+        Math.Max(Math.Max(0, Math.Max(a.Left - b.Right, b.Left - a.Right)), Math.Max(0, Math.Max(a.Top - b.Bottom, b.Top - a.Bottom)));
+
+    public static long Area(Rectangle r) => r.Width <= 0 || r.Height <= 0 ? 0 : (long)r.Width * r.Height;
+
+    /// <summary>Fraction (0..1) of the whole edge length at a point on it, and back: rules keep "along" this way.</summary>
+    public static double AlongFraction(Display m, Edge e, int center)
+    {
+        var edge = Along(m.Bounds, e);
+        return edge.Length == 0 ? 0.5 : Math.Clamp((center - edge.Start) / (double)edge.Length, 0, 1);
+    }
+
+    public static int AlongPoint(Display m, Edge e, double fraction)
+    {
+        var edge = Along(m.Bounds, e);
+        return edge.Start + (int)Math.Round(edge.Length * Math.Clamp(fraction, 0, 1));
+    }
+
+    /// <summary>frame moved along edge e so that its center is at center (rules and the demo place windows this way).</summary>
+    public static Rectangle CenteredAlong(Rectangle frame, Edge e, int center) =>
+        IsVertical(e) ? frame with { Y = center - frame.Height / 2 } : frame with { X = center - frame.Width / 2 };
+}
