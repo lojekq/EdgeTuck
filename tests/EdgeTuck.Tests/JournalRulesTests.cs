@@ -58,6 +58,10 @@ public class JournalRulesTests
         Assert.AreEqual(e.ShownRect, Journal.RestoreTarget(e, e.ShownRect.Size, Layouts.Owner));
         Assert.AreEqual(Rectangle.FromLTRB(3080, 648, 3440, 1408), Journal.RestoreTarget(e, e.ShownRect.Size, [Layouts.Display1]), "DISPLAY2 unplugged");
         Assert.AreEqual(new Size(400, 700), Journal.RestoreTarget(e, new Size(400, 700), Layouts.Owner).Size, "resized while parked");
+        var tall = new JournalEntry { Shown = JournalEntry.Ltrb(new Rectangle(3440, 1600, 486, 480)) };
+        Assert.AreEqual(new Rectangle(3440, 1467, 486, 1093), Journal.RestoreTarget(tall, new Size(486, 1093), Layouts.Owner), "grew taller while tucked: pulled up into DISPLAY2");
+        var huge = new JournalEntry { Shown = JournalEntry.Ltrb(new Rectangle(100, 100, 300, 300)) };
+        Assert.AreEqual(new Point(0, 0), Journal.RestoreTarget(huge, new Size(4000, 2000), Layouts.Owner).Location, "bigger than the monitor: top-left on screen");
     }
 
     [TestMethod]

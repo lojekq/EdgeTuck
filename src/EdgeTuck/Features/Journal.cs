@@ -54,9 +54,17 @@ public static class Journal
     public static bool Matches(JournalEntry e, int pid, DateTime? procStart, string cls) =>
         e.Pid == pid && procStart is { } s && Math.Abs((s - e.ProcStart).TotalMilliseconds) < 1 && e.Class == cls;
 
-    /// <summary>Where a window goes back: its shown position with its current size, inside the nearest monitor that still exists.</summary>
-    public static Rectangle RestoreTarget(JournalEntry e, Size size, IReadOnlyList<Display> monitors) =>
-        Monitors.ClampToVisible(new Rectangle(e.ShownRect.Location, size), monitors);
+    /// <summary>
+    /// Where a window goes back: its shown position with its current size, moved inside the work area of the monitor it is on
+    /// (or the nearest one that still exists). A window bigger than that area keeps its top-left corner on screen.
+    /// </summary>
+    public static Rectangle RestoreTarget(JournalEntry e, Size size, IReadOnlyList<Display> monitors)
+    {
+        var r = new Rectangle(e.ShownRect.Location, size);
+        if (monitors.Count == 0) return r;
+        var w = Geometry.MonitorOf(r, monitors).Work;
+        return r with { X = Math.Max(w.Left, Math.Min(r.X, w.Right - r.Width)), Y = Math.Max(w.Top, Math.Min(r.Y, w.Bottom - r.Height)) };
+    }
 
     public const int MaxRescueExes = 32;
 

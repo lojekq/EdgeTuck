@@ -657,7 +657,7 @@ public static class TuckManager
             Toast("Toast.Fights");
             return;
         }
-        Replan(t, f.Size);
+        if (!Replan(t, f.Size)) Toast("Toast.NoLongerFits");
     }
 
     /// <summary>Same edge and place along it, new size or new monitors: plan again; no longer fits → back on screen.</summary>

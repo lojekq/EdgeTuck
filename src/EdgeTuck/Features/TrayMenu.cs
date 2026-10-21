@@ -51,5 +51,29 @@ public static class TrayMenu
         if (restoreAll is not null) restoreAll.InputGestureText = Settings.Current.EdgeTuck.HotkeyRestoreAll ?? "";
     }
 
+    /// <summary>--demo --page tray --screenshot: the tray menu as the shell builds it, rendered at 2× (a popup has no window to capture).</summary>
+    public static void Screenshot(string path)
+    {
+        var menu = new ContextMenu();
+        menu.Items.Add(Tray.Item(Loc.T("Tray.Open"), () => { }));
+        menu.Items.Add(new Separator());
+        foreach (var c in Items()) menu.Items.Add(c);
+        menu.Items.Add(new Separator());
+        menu.Items.Add(Tray.Item(Loc.T("Tray.Exit"), () => { }));
+        Rebuild(menu);
+        var host = new Border { Padding = new Thickness(12), Child = menu };
+        host.SetResourceReference(Border.BackgroundProperty, "ApplicationBackgroundBrush");
+        host.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        host.Arrange(new Rect(host.DesiredSize));
+        host.UpdateLayout();
+        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(host.ActualWidth * 2), (int)Math.Ceiling(host.ActualHeight * 2), 192, 192, System.Windows.Media.PixelFormats.Pbgra32);
+        bmp.Render(host);
+        var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path))!);
+        using var f = System.IO.File.Create(path);
+        png.Save(f);
+    }
+
     static string Trim(string s) => s.Length > 48 ? s[..47] + "…" : s;
 }

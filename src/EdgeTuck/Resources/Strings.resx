@@ -99,4 +99,5 @@ Open the folder?</value></data>
   <data name="Lost.Restart" xml:space="preserve"><value>Start Edge Tuck again: it brings the windows back by itself.</value></data>
   <data name="Lost.Keys" xml:space="preserve"><value>Or pick the window with Alt+Tab and press Win+← or Win+→.</value></data>
   <data name="Lost.Move" xml:space="preserve"><value>Or press Alt+Space → Move, press an arrow key and move the mouse.</value></data>
+  <data name="Toast.NoLongerFits" xml:space="preserve"><value>The window grew and no longer fits on the free part of the edge, so it is back on screen.</value></data>
 </root>

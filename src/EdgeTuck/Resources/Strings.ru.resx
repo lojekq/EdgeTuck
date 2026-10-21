@@ -99,4 +99,5 @@
   <data name="Lost.Restart" xml:space="preserve"><value>Запустите Edge Tuck снова: он вернёт окна сам.</value></data>
   <data name="Lost.Keys" xml:space="preserve"><value>Или выберите окно через Alt+Tab и нажмите Win+← или Win+→.</value></data>
   <data name="Lost.Move" xml:space="preserve"><value>Или нажмите Alt+Space → «Переместить», стрелку и двигайте мышью.</value></data>
+  <data name="Toast.NoLongerFits" xml:space="preserve"><value>Окно выросло и больше не помещается на свободной части края, поэтому возвращено на экран.</value></data>
 </root>

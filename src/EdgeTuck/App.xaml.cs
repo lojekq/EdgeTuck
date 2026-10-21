@@ -55,6 +55,12 @@ public partial class App : Application
             Tray.Notify(AppInfo.DisplayName, Loc.T("Tray.Hidden"));
         };
         Capture.Attach(window, () => { });
+        if (a.Screenshot is not null && a.Page == "tray")
+        {
+            // ContextIdle: the demo entries and the theme are in place
+            Dispatcher.BeginInvoke(() => { TrayMenu.Screenshot(a.Screenshot); Quit(confirm: false); }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+            return;
+        }
 
         if (a.Screenshot is null)
         {
