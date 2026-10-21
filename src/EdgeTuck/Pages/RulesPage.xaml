@@ -7,26 +7,56 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,12,24,24" MaxWidth="900">
             <ui:TextBlock FontTypography="Title" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{l:T Page.Rules}" />
-            <ui:TextBlock Appearance="Secondary" Text="{l:T Rules.Subtitle}" Margin="0,4,0,16" TextWrapping="Wrap" />
+            <ui:TextBlock Appearance="Secondary" Text="{l:T Rules.Subtitle}" Margin="0,4,0,12" TextWrapping="Wrap" />
+            <ui:Button x:Name="TemplateButton" Content="{l:T Rules.AddTemplate}" Icon="{ui:SymbolIcon Add24}" Margin="0,0,0,12" />
             <ui:Card x:Name="EmptyCard" Margin="0,0,0,4">
                 <ui:TextBlock Appearance="Tertiary" Text="{l:T Rules.Empty}" TextWrapping="Wrap" />
             </ui:Card>
             <ItemsControl x:Name="List">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type f:Rule}">
-                        <ui:CardControl Margin="0,0,0,4" Icon="{ui:SymbolIcon AppsListDetail24}">
-                            <ui:CardControl.Header>
-                                <StackPanel>
-                                    <ui:TextBlock Text="{Binding Exe}" FontTypography="BodyStrong" />
-                                    <ui:TextBlock Text="{Binding Detail}" FontTypography="Caption" Appearance="Secondary" />
+                        <ui:CardExpander Margin="0,0,0,4" Icon="{ui:SymbolIcon AppsListDetail24}">
+                            <ui:CardExpander.Header>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <ui:TextBlock Text="{Binding Exe}" FontTypography="BodyStrong" />
+                                        <ui:TextBlock Text="{Binding Detail}" FontTypography="Caption" Appearance="Secondary" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,12,0">
+                                        <ui:ToggleSwitch IsChecked="{Binding AutoTuck}" Content="{l:T Rules.AutoTuck}" Margin="0,0,24,0" />
+                                        <ui:ToggleSwitch IsChecked="{Binding Enabled}" Content="{l:T Rules.Enabled}" Margin="0,0,16,0" />
+                                        <ui:Button Icon="{ui:SymbolIcon Delete24}" ToolTip="{l:T Rules.Delete}" Click="OnDelete" />
+                                    </StackPanel>
+                                </Grid>
+                            </ui:CardExpander.Header>
+                            <Grid Margin="40,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <ui:TextBlock Text="{l:T Rules.TitleContains}" VerticalAlignment="Center" Margin="0,4,16,4" />
+                                <ui:TextBox Grid.Column="1" Text="{Binding TitleContains, UpdateSourceTrigger=LostFocus}" PlaceholderText="{l:T Rules.TitleHint}"
+                                            MaxWidth="360" MinWidth="240" HorizontalAlignment="Left" Margin="0,4" />
+                                <ui:TextBlock Grid.Row="1" Text="{l:T Rules.MinSize}" VerticalAlignment="Center" Margin="0,4,16,4" />
+                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                                    <ui:TextBox Text="{Binding MinWidth, UpdateSourceTrigger=LostFocus}" Width="90" />
+                                    <ui:TextBlock Text="×" VerticalAlignment="Center" Margin="8,0" Appearance="Secondary" />
+                                    <ui:TextBox Text="{Binding MinHeight, UpdateSourceTrigger=LostFocus}" Width="90" />
+                                    <ui:TextBlock Text="px" VerticalAlignment="Center" Margin="8,0" Appearance="Secondary" />
                                 </StackPanel>
-                            </ui:CardControl.Header>
-                            <StackPanel Orientation="Horizontal">
-                                <ui:ToggleSwitch IsChecked="{Binding AutoTuck}" Content="{l:T Rules.AutoTuck}" Margin="0,0,24,0" />
-                                <ui:ToggleSwitch IsChecked="{Binding Enabled}" Content="{l:T Rules.Enabled}" Margin="0,0,16,0" />
-                                <ui:Button Icon="{ui:SymbolIcon Delete24}" ToolTip="{l:T Rules.Delete}" Click="OnDelete" />
-                            </StackPanel>
-                        </ui:CardControl>
+                                <ui:TextBlock Grid.Row="2" Text="{l:T Rules.Hotkey}" VerticalAlignment="Center" Margin="0,4,16,4" />
+                                <l:HotkeyBox Grid.Row="2" Grid.Column="1" Hotkey="{Binding Hotkey}" HorizontalAlignment="Left" Margin="0,4" />
+                            </Grid>
+                        </ui:CardExpander>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

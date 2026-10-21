@@ -75,6 +75,20 @@ public class JournalRulesTests
     }
 
     [TestMethod]
+    public void TitleFilterAndMinimumSizeKeepSplashesOut()
+    {
+        Rule[] rules = [new() { Exe = "WindowsTerminal.exe", TitleContains = "quake", MinWidth = 400, MinHeight = 200 }];
+        Assert.AreEqual(rules[0], Rules.Match(rules, "WindowsTerminal.exe", "QUAKE - pwsh", new Size(1200, 500)));
+        Assert.IsNull(Rules.Match(rules, "WindowsTerminal.exe", "demo - pwsh", new Size(1200, 500)), "another terminal");
+        Assert.IsNull(Rules.Match(rules, "WindowsTerminal.exe", "quake", new Size(300, 500)), "a splash is narrower");
+        Assert.AreEqual(rules[0], Rules.Match(rules, "WindowsTerminal.exe"), "no title or size known: the program alone decides");
+        rules[0].TitleContains = "  ";
+        Assert.IsNull(rules[0].TitleContains, "a blank filter is no filter");
+        Assert.IsTrue(Rules.Templates.All(t => !t.Enabled && t.MinWidth > 0), "templates are off until switched on");
+        Assert.AreEqual(4, Rules.Templates.Select(t => t.Exe).Distinct().Count());
+    }
+
+    [TestMethod]
     public void AlongOnASharedPartMovesIntoTheFreeOne()
     {
         var o = Layouts.Owner;

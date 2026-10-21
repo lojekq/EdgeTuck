@@ -101,4 +101,15 @@ Open the folder?</value></data>
   <data name="Lost.Move" xml:space="preserve"><value>Or press Alt+Space → Move, press an arrow key and move the mouse.</value></data>
   <data name="Toast.NoLongerFits" xml:space="preserve"><value>The window grew and no longer fits on the free part of the edge, so it is back on screen.</value></data>
   <data name="Unit.Ms" xml:space="preserve"><value>ms</value></data>
+  <data name="Rules.AddTemplate" xml:space="preserve"><value>Add from a template</value></data>
+  <data name="Rules.TitleContains" xml:space="preserve"><value>Title contains</value></data>
+  <data name="Rules.TitleHint" xml:space="preserve"><value>Any window of the program</value></data>
+  <data name="Rules.MinSize" xml:space="preserve"><value>At least</value></data>
+  <data name="Rules.Hotkey" xml:space="preserve"><value>Show or hide with</value></data>
+  <data name="Settings.SlideOutOnHover" xml:space="preserve"><value>Slide out when the mouse rests on a tab</value></data>
+  <data name="Settings.SlideOutOnHover.Note" xml:space="preserve"><value>Off: a tab opens by click only</value></data>
+  <data name="Settings.SharedEdges" xml:space="preserve"><value>Tabs on edges shared with another monitor</value></data>
+  <data name="Settings.SharedEdges.Note" xml:space="preserve"><value>The window waits behind an outer edge and appears at once; the tab opens by click</value></data>
+  <data name="Settings.HoverOnSharedEdges" xml:space="preserve"><value>Open them by hover too</value></data>
+  <data name="Settings.TabIcon" xml:space="preserve"><value>Tab with the program's icon</value></data>
 </root>

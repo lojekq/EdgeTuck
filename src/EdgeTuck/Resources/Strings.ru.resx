@@ -101,4 +101,15 @@
   <data name="Lost.Move" xml:space="preserve"><value>Или нажмите Alt+Space → «Переместить», стрелку и двигайте мышью.</value></data>
   <data name="Toast.NoLongerFits" xml:space="preserve"><value>Окно выросло и больше не помещается на свободной части края, поэтому возвращено на экран.</value></data>
   <data name="Unit.Ms" xml:space="preserve"><value>мс</value></data>
+  <data name="Rules.AddTemplate" xml:space="preserve"><value>Добавить из шаблона</value></data>
+  <data name="Rules.TitleContains" xml:space="preserve"><value>Заголовок содержит</value></data>
+  <data name="Rules.TitleHint" xml:space="preserve"><value>Любое окно программы</value></data>
+  <data name="Rules.MinSize" xml:space="preserve"><value>Не меньше</value></data>
+  <data name="Rules.Hotkey" xml:space="preserve"><value>Показать или спрятать</value></data>
+  <data name="Settings.SlideOutOnHover" xml:space="preserve"><value>Выезжать при наведении на язычок</value></data>
+  <data name="Settings.SlideOutOnHover.Note" xml:space="preserve"><value>Выкл: язычок открывается только щелчком</value></data>
+  <data name="Settings.SharedEdges" xml:space="preserve"><value>Язычки на общих краях мониторов</value></data>
+  <data name="Settings.SharedEdges.Note" xml:space="preserve"><value>Окно ждёт за внешним краем и появляется сразу; язычок открывается щелчком</value></data>
+  <data name="Settings.HoverOnSharedEdges" xml:space="preserve"><value>Открывать их и наведением</value></data>
+  <data name="Settings.TabIcon" xml:space="preserve"><value>Язычок со значком программы</value></data>
 </root>

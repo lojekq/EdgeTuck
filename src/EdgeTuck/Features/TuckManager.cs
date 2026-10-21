@@ -21,7 +21,7 @@ public static class TuckManager
 {
     const uint EVENT_SYSTEM_FOREGROUND = 0x0003, EVENT_SYSTEM_MOVESIZESTART = 0x000A, EVENT_SYSTEM_MOVESIZEEND = 0x000B,
         EVENT_OBJECT_DESTROY = 0x8001, EVENT_OBJECT_SHOW = 0x8002, EVENT_OBJECT_HIDE = 0x8003, EVENT_OBJECT_LOCATIONCHANGE = 0x800B;
-    const int HotkeyBase = 100, HotkeyRestoreAll = 110;
+    const int HotkeyBase = 100, HotkeyRestoreAll = 110, HotkeyRules = 200, MaxRuleHotkeys = 50;
     const int SpiSetWorkArea = 0x002F, PbtResumeAutomatic = 0x0012;
     const int LeaveMargin = 16;
     static readonly HashSet<string> ShellClasses = ["Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"];
@@ -90,7 +90,24 @@ public static class TuckManager
         WinEvents.Hook(EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND, OnEvent);
         WinEvents.Hook(EVENT_OBJECT_DESTROY, EVENT_OBJECT_HIDE, OnEvent);
         MessageWindow.WndProc += OnMessage;
+        StartShellHook();
         foreach (var w in TopWindows.List()) ApplyRule(w.Hwnd);
+    }
+
+    const int HshellFlash = 0x8006; // HSHELL_REDRAW | HSHELL_HIGHBIT
+    static int shellHookMessage;
+
+    /// <summary>
+    /// RegisterShellHookWindow is "not intended for general use" and may go away (plan 04 §6): if it fails, tabs just never flash.
+    /// </summary>
+    static void StartShellHook()
+    {
+        try
+        {
+            shellHookMessage = Win.RegisterShellHook(MessageWindow.Handle);
+            if (shellHookMessage == 0) Log.Info("shell hook not available: tabs will not flash");
+        }
+        catch (Exception e) { Log.Warn("shell hook", e); }
     }
 
     static void OnExiting()
@@ -171,7 +188,41 @@ public static class TuckManager
             var n = RestoreAll();
             Toast("Toast.RestoredAll", n);
         }, toastBusy);
+        RegisterRuleHotkeys(toastBusy);
         return result;
+    }
+
+    /// <summary>v1.0: each rule's own "show or hide this window" key (quake mode for any program).</summary>
+    public static void RegisterRuleHotkeys(bool toastBusy = true)
+    {
+        for (var i = 0; i < MaxRuleHotkeys; i++) Hotkeys.Unregister(HotkeyRules + i);
+        var rules = S.Rules;
+        for (var i = 0; i < Math.Min(rules.Count, MaxRuleHotkeys); i++)
+        {
+            var r = rules[i];
+            if (r.Hotkey is not null) Register(HotkeyRules + i, r.Hotkey, () => OnRuleHotkey(r), toastBusy);
+        }
+    }
+
+    static void OnRuleHotkey(Rule r)
+    {
+        if (Windows.FirstOrDefault(x => Rules.Fits(r, x.DemoExe ?? x.Exe, x.Title, null)) is { } t)
+        {
+            if (t.State == TuckState.Parked) { SlideOut(t, activate: true); return; }
+            var wasForeground = Win.Foreground == t.Hwnd;
+            SlideIn(t);
+            if (wasForeground) ActivateNext(t); // the keys should not go on typing into a window nobody sees
+            return;
+        }
+        monitors = Monitors.Snapshot();
+        foreach (var w in TopWindows.List())
+        {
+            if (w.Cloaked || ByHwnd.ContainsKey(w.Hwnd) || Ineligible(w.Hwnd) is not null || Win.Frame(w.Hwnd) is not { } f) continue;
+            if (!Rules.Fits(r, ProcessInfo.ExePath(w.Pid), w.Title, f.Size)) continue;
+            var (m, at) = Rules.Target(r, f, monitors);
+            TryTuck(w.Hwnd, r.Edge, m, at, TuckSource.Hotkey);
+            return;
+        }
     }
 
     static HotkeyStatus Register(int id, string? text, Action pressed, bool toastBusy)
@@ -322,6 +373,9 @@ public static class TuckManager
         tab.Hovered += () => { if (t.State == TuckState.Parked && HoverOpens(t)) SlideOut(t, activate: false); };
         tab.Clicked += () => SlideOut(t, activate: true);
         tab.DpiMoved += ScheduleRelayout;
+        tab.DragMoved += p => DragTab(t, p);
+        tab.DragEnded += () => DropTab(t);
+        tab.DragOver += () => { if (t.State == TuckState.Parked) SlideOut(t, activate: false); }; // a file for the window: it comes out to take it
         tab.Menu = () => TabMenu(t);
         t.Tab = tab;
         RelayoutTabs();
@@ -402,7 +456,7 @@ public static class TuckManager
         if (t.State == TuckState.Parked || t.Anim is not null) Slide(t, t.Plan.Shown.Location, toTop: true, syncFirst: false, done: null);
         t.State = activate || t.State == TuckState.OutPinned ? TuckState.OutPinned : TuckState.Out;
         t.LeaveSince = null;
-        t.Tab?.Hide();
+        if (t.Tab is { } tab) { tab.Hide(); tab.Flash = false; }
         if (activate && !Win.Activate(h)) Log.Info("activation refused by Windows");
         if (!LeaveTimer.IsEnabled) LeaveTimer.Start();
         Changed?.Invoke();
@@ -504,15 +558,47 @@ public static class TuckManager
     /// <summary>Tabs of each segment of each edge, laid out together (Geometry.Tabs).</summary>
     static void RelayoutTabs()
     {
-        var size = new Geometry.TabSize(Math.Clamp(S.TabThickness, 2, 32), Math.Clamp(S.TabLength, 16, 400));
+        var size = TabSize();
         foreach (var g in Windows.Where(t => t.Tab is not null).GroupBy(t => (t.Plan.Monitor.Device, t.Plan.Edge, t.Plan.Segment)))
         {
             var list = g.ToList();
             var first = list[0].Plan;
             var rects = Geometry.Tabs(first.Monitor, first.Edge, first.Segment,
                 list.Select(t => { var a = Geometry.Along(t.Plan.Shown, t.Plan.Edge); return a.Start + a.Length / 2; }).ToList(), size);
-            for (var i = 0; i < list.Count; i++) list[i].Tab!.Place(rects[i]);
+            for (var i = 0; i < list.Count; i++)
+            {
+                list[i].Tab!.IconSource = S.TabIcon ? list[i].Icon : null;
+                list[i].Tab!.Place(rects[i]);
+            }
         }
+    }
+
+    /// <summary>Thin tab from the settings, or (v1.0) a wider one with the program's icon.</summary>
+    static Geometry.TabSize TabSize() => S.TabIcon
+        ? new Geometry.TabSize(24, 48)
+        : new Geometry.TabSize(Math.Clamp(S.TabThickness, 2, 32), Math.Clamp(S.TabLength, 16, 400));
+
+    /// <summary>Settings changed: tabs take the new size and style.</summary>
+    public static void RefreshTabs() => RelayoutTabs();
+
+    /// <summary>v1.0: the tab follows the mouse along its segment while dragged.</summary>
+    static void DragTab(Tucked t, Point cursor)
+    {
+        if (t.Tab is null || t.State != TuckState.Parked) return;
+        t.DragAlong = Geometry.IsVertical(t.Plan.Edge) ? cursor.Y : cursor.X;
+        t.Tab.Place(Geometry.Tabs(t.Plan.Monitor, t.Plan.Edge, t.Plan.Segment, [t.DragAlong.Value], TabSize())[0]);
+    }
+
+    /// <summary>v1.0: let go: the window moves along the edge to where the tab is (it may move to another free part).</summary>
+    static void DropTab(Tucked t)
+    {
+        if (t.DragAlong is not { } along) return;
+        t.DragAlong = null;
+        var size = Win.IsIconic(t.Hwnd) ? t.Plan.Shown.Size : Win.Frame(t.Hwnd)?.Size ?? t.Plan.Shown.Size;
+        var at = Geometry.CenteredAlong(new Rectangle(t.Plan.Shown.Location, size), t.Plan.Edge, along).Location;
+        monitors = Monitors.Snapshot();
+        if (Replan(t, size, at)) Log.Info($"tab of {t.Program} dragged along the edge");
+        RelayoutTabs();
     }
 
     // ---------- events ----------
@@ -661,10 +747,10 @@ public static class TuckManager
     }
 
     /// <summary>Same edge and place along it, new size or new monitors: plan again; no longer fits → back on screen.</summary>
-    static bool Replan(Tucked t, Size size)
+    static bool Replan(Tucked t, Size size, Point? at = null)
     {
         var m = monitors.FirstOrDefault(d => d.Device == t.Plan.Monitor.Device);
-        var r = m is null ? default : Geometry.Plan(monitors, m, t.Plan.Edge, new Rectangle(t.Plan.Shown.Location, size), S.SharedEdges);
+        var r = m is null ? default : Geometry.Plan(monitors, m, t.Plan.Edge, new Rectangle(at ?? t.Plan.Shown.Location, size), S.SharedEdges);
         if (r.Plan is not { } plan)
         {
             Log.Info($"{t.Program} no longer fits on {t.Plan.Edge} of {t.Plan.Monitor.Device}: {(m is null ? "monitor gone" : r.Fail)}");
@@ -711,6 +797,10 @@ public static class TuckManager
 
     static nint OnMessage(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
+        // v1.0: a tucked window flashes (a new message): light its tab up
+        if (shellHookMessage != 0 && msg == shellHookMessage && (int)wParam == HshellFlash && ByHwnd.TryGetValue(lParam, out var flashing)
+            && flashing.State == TuckState.Parked && flashing.Tab is { } tab)
+            tab.Flash = true;
         if (msg == MessageWindow.WM_DISPLAYCHANGE
             || (msg == MessageWindow.WM_SETTINGCHANGE && wParam == SpiSetWorkArea)
             || (msg == MessageWindow.WM_POWERBROADCAST && wParam == PbtResumeAutomatic))
@@ -749,10 +839,9 @@ public static class TuckManager
         if (S.Rules.Count == 0 && journal.RescueExes.Count == 0) return;
         if (Ineligible(h) is not null) return;
         var exe = ProcessInfo.ExePath(TopWindows.Pid(h));
-        if (exe is null) return;
-        var rule = Rules.Match(S.Rules, exe);
+        if (exe is null || Win.Frame(h) is not { } f) return;
+        var rule = Rules.Match(S.Rules, exe, TopWindows.TitleOf(h), f.Size);
         if (rule is null && !journal.RescueExes.Contains(Path.GetFileName(exe), StringComparer.OrdinalIgnoreCase)) return;
-        if (Win.Frame(h) is not { } f) return;
         monitors = Monitors.Snapshot();
         if (rule is { AutoTuck: true })
         {
@@ -774,6 +863,7 @@ public static class TuckManager
         var first = rules.Count == 0;
         rules.Add(rule);
         Settings.Save();
+        RegisterRuleHotkeys();
         Log.Info($"rule added for {rule.Exe}");
         if (first && !Autostart.IsEnabled) ToastPage("Toast.FirstRule", "settings");
         Changed?.Invoke();
@@ -782,6 +872,16 @@ public static class TuckManager
     public static void RemoveRule(string exe)
     {
         S.Rules.RemoveAll(r => r.Exe.Equals(exe, StringComparison.OrdinalIgnoreCase));
+        Settings.Save();
+        RegisterRuleHotkeys();
+        Changed?.Invoke();
+    }
+
+    /// <summary>v1.0: a template from the Rules page, off until the user turns it on; an existing rule for that program stays.</summary>
+    public static void AddTemplate(Rule template)
+    {
+        if (S.Rules.Any(r => r.Exe.Equals(template.Exe, StringComparison.OrdinalIgnoreCase))) return;
+        S.Rules.Add(template);
         Settings.Save();
         Changed?.Invoke();
     }

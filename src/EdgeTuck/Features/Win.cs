@@ -138,6 +138,13 @@ public static unsafe class Win
         PInvoke.SetWindowLong((HWND)h, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)ex);
     }
 
+    /// <summary>Shell hook messages (HSHELL_FLASH…) to our window; the message id, or 0 when Windows refused.</summary>
+    public static int RegisterShellHook(nint h)
+    {
+        var msg = (int)PInvoke.RegisterWindowMessage("SHELLHOOK");
+        return msg != 0 && PInvoke.RegisterShellHookWindow((HWND)h) ? msg : 0;
+    }
+
     /// <summary>--autoplay backdrop: top of the normal windows, not topmost, not activated.</summary>
     public static void PlaceOnTop(nint h, Rectangle r) =>
         PInvoke.SetWindowPos((HWND)h, default, r.X, r.Y, r.Width, r.Height, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);

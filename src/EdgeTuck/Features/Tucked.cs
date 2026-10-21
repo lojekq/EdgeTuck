@@ -59,6 +59,7 @@ public sealed class Tucked : INotifyPropertyChanged
     internal Anim? Anim;
     internal bool Hidden;               // its program hid the window (to the tray)
     internal int Fights;
+    internal int? DragAlong;            // v1.0: the tab is being dragged along the edge to here
     internal DateTime FightsSince;
 
     public JournalEntry ToEntry() => new()

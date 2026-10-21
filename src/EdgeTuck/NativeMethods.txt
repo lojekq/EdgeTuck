@@ -66,3 +66,5 @@ SetWindowLong
 WM_DPICHANGED
 ShowWindow
 WINDOW_STYLE
+RegisterShellHookWindow
+RegisterWindowMessage

@@ -36,6 +36,7 @@ namespace EdgeTuck.Features
         public bool SlideOutOnHover { get; set; } = true;      // false = click only
         public bool SharedEdges { get; set; } = true;          // a floating tab on an edge shared with another monitor
         public bool HoverOnSharedEdges { get; set; }           // the mouse crosses the seam all the time: click only by default
+        public bool TabIcon { get; set; }                      // a wider tab with the program's icon
         public List<Rule> Rules { get; set; } = [];
 
         public string? Hotkey(Edge e) => e switch
@@ -60,6 +61,8 @@ namespace EdgeTuck.Features
     {
         string exe = "";
         bool autoTuck = true, enabled = true;
+        string? titleContains, hotkey;
+        int minWidth, minHeight;
 
         public string Exe { get => exe; set { exe = value; Changed(); } }
         public Edge Edge { get; set; }
@@ -67,6 +70,11 @@ namespace EdgeTuck.Features
         public double Along { get; set; } = 0.5;
         public bool AutoTuck { get => autoTuck; set { autoTuck = value; Changed(); } }
         public bool Enabled { get => enabled; set { enabled = value; Changed(); } }
+        // v1.0: catch only the right window (not a splash or an updater) and show or hide it with a key
+        public string? TitleContains { get => titleContains; set { titleContains = string.IsNullOrWhiteSpace(value) ? null : value; Changed(); } }
+        public int MinWidth { get => minWidth; set { minWidth = Math.Max(0, value); Changed(); } }
+        public int MinHeight { get => minHeight; set { minHeight = Math.Max(0, value); Changed(); } }
+        public string? Hotkey { get => hotkey; set { hotkey = value; Changed(); } }
 
         [JsonIgnore] public string Detail => $"{Loc.T("Edge." + Edge)} · {(Monitor is null ? "" : Tucked.MonitorName(Monitor))}";
 

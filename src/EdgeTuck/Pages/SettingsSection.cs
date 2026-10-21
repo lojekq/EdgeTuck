@@ -59,6 +59,14 @@ public static class SettingsSection
         gesture.Children.Add(Toggle(S.Gesture, v => S.Gesture = v));
         panel.Children.Add(Card("Settings.Gesture", SymbolRegular.HandDraw24, gesture, "Settings.Gesture.Note"));
         panel.Children.Add(Card("Settings.Fullscreen", SymbolRegular.FullScreenMaximize24, Toggle(S.HideTabsInFullscreen, v => S.HideTabsInFullscreen = v), "Settings.Fullscreen.Note"));
+        panel.Children.Add(Card("Settings.SlideOutOnHover", SymbolRegular.CursorHover24, Toggle(S.SlideOutOnHover, v => S.SlideOutOnHover = v), "Settings.SlideOutOnHover.Note"));
+        var shared = new StackPanel { Orientation = Orientation.Horizontal };
+        shared.Children.Add(new TextBlock { Text = Loc.T("Settings.HoverOnSharedEdges"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0), Appearance = TextColor.Secondary });
+        shared.Children.Add(Toggle(S.HoverOnSharedEdges, v => S.HoverOnSharedEdges = v));
+        shared.Children.Add(new FrameworkElement { Width = 24 });
+        shared.Children.Add(Toggle(S.SharedEdges, v => S.SharedEdges = v));
+        panel.Children.Add(Card("Settings.SharedEdges", SymbolRegular.SplitVertical24, shared, "Settings.SharedEdges.Note"));
+        panel.Children.Add(Card("Settings.TabIcon", SymbolRegular.Apps24, Toggle(S.TabIcon, v => { S.TabIcon = v; TuckManager.RefreshTabs(); })));
         return panel;
     }
 

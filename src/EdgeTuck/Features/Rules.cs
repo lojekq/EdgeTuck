@@ -7,13 +7,29 @@ namespace EdgeTuck.Features;
 /// <summary>Matching new windows to rules (pure); the runtime part is in TuckManager.</summary>
 public static class Rules
 {
-    /// <summary>The first enabled rule for this exe (full path or file name), case-insensitive.</summary>
-    public static Rule? Match(IEnumerable<Rule> rules, string? exe)
+    /// <summary>
+    /// The first enabled rule for this exe (full path or file name), case-insensitive, whose title filter (part of the title, any case)
+    /// and minimum size the window passes. No title or size given: those checks are skipped.
+    /// </summary>
+    public static Rule? Match(IEnumerable<Rule> rules, string? exe, string? title = null, Size? size = null) =>
+        rules.FirstOrDefault(r => r.Enabled && Fits(r, exe, title, size));
+
+    /// <summary>The rule's program, title filter and minimum size, enabled or not (a rule's own hotkey works on disabled rules too).</summary>
+    public static bool Fits(Rule r, string? exe, string? title, Size? size)
     {
-        if (string.IsNullOrEmpty(exe)) return null;
-        var name = Path.GetFileName(exe);
-        return rules.FirstOrDefault(r => r.Enabled && r.Exe.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (string.IsNullOrEmpty(exe) || !r.Exe.Equals(Path.GetFileName(exe), StringComparison.OrdinalIgnoreCase)) return false;
+        if (r.TitleContains is { } part && title is not null && !title.Contains(part, StringComparison.OrdinalIgnoreCase)) return false;
+        return size is not { } s || (s.Width >= r.MinWidth && s.Height >= r.MinHeight);
     }
+
+    /// <summary>v1.0 templates, off until switched on: the programs people tuck most. The size limit keeps splash screens out.</summary>
+    public static Rule[] Templates =>
+    [
+        new() { Exe = "scrcpy.exe", Edge = Edge.Right, Along = 0.5, Enabled = false, MinWidth = 200, MinHeight = 300 },
+        new() { Exe = "Discord.exe", Edge = Edge.Left, Along = 0.5, Enabled = false, MinWidth = 500, MinHeight = 400 },
+        new() { Exe = "Spotify.exe", Edge = Edge.Left, Along = 0.8, Enabled = false, MinWidth = 400, MinHeight = 300 },
+        new() { Exe = "WindowsTerminal.exe", Edge = Edge.Top, Along = 0.5, Enabled = false, AutoTuck = false, MinWidth = 400, MinHeight = 200 },
+    ];
 
     /// <summary>
     /// The monitor and where along its edge the window should go: the rule's monitor, or (gone) the one the window is on, or the primary;
