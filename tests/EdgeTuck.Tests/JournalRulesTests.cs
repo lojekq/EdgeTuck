@@ -84,6 +84,9 @@ public class JournalRulesTests
         Assert.AreEqual(512 - 240, frame.Top);
         Assert.AreEqual(Rectangle.FromLTRB(3440, 1520, 4200, 2000), Geometry.Tuck(o, m, spotify.Edge, frame).Plan!.Shown);
 
+        var handEdited = new Rule { Exe = "scrcpy.exe", Edge = Edge.Right, Monitor = "display2" };
+        Assert.AreEqual(Layouts.Display2, Rules.Target(handEdited, new Rectangle(100, 100, 360, 760), o).Monitor, "monitor name without the device prefix, in any case");
+
         var gone = new Rule { Exe = "scrcpy.exe", Edge = Edge.Right, Monitor = @"\\.\DISPLAY3" };
         Assert.AreEqual(Layouts.Display2, Rules.Target(gone, new Rectangle(3600, 100, 360, 760), o).Monitor, "the monitor the window is on");
         Assert.AreEqual(Layouts.Display1, Rules.Target(gone, new Rectangle(-5000, 100, 360, 760), o).Monitor, "off screen: the primary");

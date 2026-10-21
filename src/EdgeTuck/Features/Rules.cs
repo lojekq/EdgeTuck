@@ -21,10 +21,14 @@ public static class Rules
     /// </summary>
     public static (Display Monitor, Rectangle Frame) Target(Rule r, Rectangle frame, IReadOnlyList<Display> monitors)
     {
-        var m = monitors.FirstOrDefault(d => d.Device == r.Monitor)
+        var m = monitors.FirstOrDefault(d => SameMonitor(d.Device, r.Monitor))
             ?? (monitors.Any(d => d.Bounds.IntersectsWith(frame)) ? Geometry.MonitorOf(frame, monitors) : Primary(monitors));
         return (m, Geometry.CenteredAlong(frame, r.Edge, Geometry.AlongPoint(m, r.Edge, r.Along)));
     }
+
+    /// <summary>@"\\.\DISPLAY2", "DISPLAY2" and "display2" are the same monitor (hand-edited settings).</summary>
+    public static bool SameMonitor(string? a, string? b) =>
+        a is not null && b is not null && a.TrimStart('\\', '.').Equals(b.TrimStart('\\', '.'), StringComparison.OrdinalIgnoreCase);
 
     public static Display Primary(IReadOnlyList<Display> monitors) =>
         monitors.FirstOrDefault(d => d.Bounds.Contains(0, 0)) ?? monitors[0];

@@ -56,7 +56,7 @@ public static class DemoData
             var a = along ?? (Geometry.IsVertical(e) ? w.Top + (w.Height - size.Height) / 2 : w.Left + (w.Width - size.Width) / 2);
             return Geometry.IsVertical(e) ? new(new Point(w.Left + 100, a), size) : new(new Point(a, w.Top + 100), size);
         }
-        if (monitors.FirstOrDefault(d => d.Device == s.Device) is { } own && Geometry.Tuck(monitors, own, s.Edge, Frame(own, s.Edge, s.Along)).Plan is not null)
+        if (monitors.FirstOrDefault(d => Rules.SameMonitor(d.Device, s.Device)) is { } own && Geometry.Tuck(monitors, own, s.Edge, Frame(own, s.Edge, s.Along)).Plan is not null)
             return (own, s.Edge, Frame(own, s.Edge, s.Along));
         var primary = Rules.Primary(monitors);
         foreach (var e in new[] { Edge.Right, Edge.Left, Edge.Bottom, Edge.Top })

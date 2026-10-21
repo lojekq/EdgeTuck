@@ -61,13 +61,12 @@ public static class TrayMenu
         menu.Items.Add(new Separator());
         menu.Items.Add(Tray.Item(Loc.T("Tray.Exit"), () => { }));
         Rebuild(menu);
-        var host = new Border { Padding = new Thickness(12), Child = menu };
-        host.SetResourceReference(Border.BackgroundProperty, "ApplicationBackgroundBrush");
-        host.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        host.Arrange(new Rect(host.DesiredSize));
-        host.UpdateLayout();
-        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(host.ActualWidth * 2), (int)Math.Ceiling(host.ActualHeight * 2), 192, 192, System.Windows.Media.PixelFormats.Pbgra32);
-        bmp.Render(host);
+        // A ContextMenu may have no parent: render it on its own
+        menu.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        menu.Arrange(new Rect(menu.DesiredSize));
+        menu.UpdateLayout();
+        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(menu.ActualWidth * 2), (int)Math.Ceiling(menu.ActualHeight * 2), 192, 192, System.Windows.Media.PixelFormats.Pbgra32);
+        bmp.Render(menu);
         var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
         png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path))!);

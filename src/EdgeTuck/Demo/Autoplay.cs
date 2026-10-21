@@ -103,7 +103,7 @@ public static class Autoplay
     /// <summary>A plain window over DISPLAY2 under the demo windows: no wallpaper or other windows in the frame.</summary>
     static void Backdrop(Display d2, uint rgb)
     {
-        var w = new Window
+        var w = new BackdropWindow
         {
             WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, ShowInTaskbar = false,
             Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb)),
@@ -117,6 +117,9 @@ public static class Autoplay
         };
         w.Show();
     }
+
+    /// <summary>A subclass, so WPF-UI's implicit Window style (it sets AllowsTransparency) does not reach it.</summary>
+    sealed class BackdropWindow : Window;
 
     static void WriteRect(Rectangle r)
     {
