@@ -8,7 +8,10 @@ namespace EdgeTuck.Shell
 {
     public sealed partial class Settings
     {
-        public EdgeTuckSettings EdgeTuck { get; set; } = new();
+        EdgeTuckSettings edgeTuck = new();
+
+        /// <summary>A hand-edited "edgeTuck": null means the defaults, not a crash.</summary>
+        public EdgeTuckSettings EdgeTuck { get => edgeTuck; set => edgeTuck = value ?? new(); }
     }
 }
 
@@ -37,7 +40,10 @@ namespace EdgeTuck.Features
         public bool SharedEdges { get; set; } = true;          // a floating tab on an edge shared with another monitor
         public bool HoverOnSharedEdges { get; set; }           // the mouse crosses the seam all the time: click only by default
         public bool TabIcon { get; set; }                      // a wider tab with the program's icon
-        public List<Rule> Rules { get; set; } = [];
+        List<Rule> rules = [];
+
+        /// <summary>"rules": null in a hand-edited file means no rules (Edge Tuck 1.0.0 crashed on it at start).</summary>
+        public List<Rule> Rules { get => rules; set => rules = value?.Where(r => r is not null).ToList() ?? []; }
 
         public string? Hotkey(Edge e) => e switch
         {

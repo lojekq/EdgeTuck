@@ -23,6 +23,7 @@ public sealed class Tucked : INotifyPropertyChanged
     public string Exe { get; init; } = "";
     public string Class { get; init; } = "";
     public bool WasMaximized { get; init; }
+    public bool WasTopmost { get; init; }
     public ImageSource? Icon { get; init; }
     /// <summary>--demo: the program name to show instead of our own exe.</summary>
     public string? DemoExe { get; init; }
@@ -59,13 +60,15 @@ public sealed class Tucked : INotifyPropertyChanged
     internal Anim? Anim;
     internal bool Hidden;               // its program hid the window (to the tray)
     internal int Fights;
-    internal int? DragAlong;            // v1.0: the tab is being dragged along the edge to here
+    internal int? DragAlong;
+    internal nint PeekDialog;           // its dialog that opened in the background, topmost until looked at
+    internal bool Peeking;              // topmost for a peek by hover: undone when it slides in, is pinned or untucked            // v1.0: the tab is being dragged along the edge to here
     internal DateTime FightsSince;
 
     public JournalEntry ToEntry() => new()
     {
         Hwnd = Hwnd, Pid = Pid, ProcStart = ProcStart, Exe = Exe, Class = Class, Edge = Plan.Edge, Monitor = Plan.Monitor.Device,
-        Shown = JournalEntry.Ltrb(Plan.Shown), Parked = JournalEntry.Ltrb(Plan.Parked), WasMaximized = WasMaximized,
+        Shown = JournalEntry.Ltrb(Plan.Shown), Parked = JournalEntry.Ltrb(Plan.Parked), WasMaximized = WasMaximized, WasTopmost = WasTopmost,
     };
 
     public event PropertyChangedEventHandler? PropertyChanged;

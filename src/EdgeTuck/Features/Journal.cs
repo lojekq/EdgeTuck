@@ -19,6 +19,8 @@ public sealed class JournalEntry
     public int[] Shown { get; set; } = [0, 0, 0, 0];
     public int[] Parked { get; set; } = [0, 0, 0, 0];
     public bool WasMaximized { get; set; }
+    /// <summary>The window was topmost by itself; otherwise a topmost left by a peek is taken off when it comes back.</summary>
+    public bool WasTopmost { get; set; }
 
     [JsonIgnore] public Rectangle ShownRect => Rectangle.FromLTRB(Shown[0], Shown[1], Shown[2], Shown[3]);
     [JsonIgnore] public Rectangle ParkedRect => Rectangle.FromLTRB(Parked[0], Parked[1], Parked[2], Parked[3]);

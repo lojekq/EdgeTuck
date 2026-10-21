@@ -73,9 +73,9 @@ public static class TuckManager
         FullscreenTimer.Tick += (_, _) => CheckFullscreen();
         DisplayDebounce.Tick += (_, _) => { DisplayDebounce.Stop(); Relayout(); };
         App.Exiting += OnExiting;
-        RegisterHotkeys(toastBusy: true);
-        if (Demo) return; // own fake windows only: no journal, guard, hooks or rules (00-shared §2.3)
+        if (Demo) { RegisterHotkeys(toastBusy: true); return; } // own fake windows only: no journal, guard, hooks or rules (00-shared §2.3)
 
+        // The journal first: whatever fails later, a crash must not write an empty journal over windows a previous run left
         RecoverLeftovers();
         var me = Process.GetCurrentProcess();
         journal = new JournalFile
@@ -83,8 +83,10 @@ public static class TuckManager
             OwnerPid = me.Id, OwnerStart = ProcessInfo.StartTime(me.Id) ?? DateTime.UtcNow,
             RescueExes = journal.RescueExes,
         };
+        journalTaken = true;
         SaveJournal();
         StartGuard();
+        RegisterHotkeys(toastBusy: true);
 
         WinEvents.Hook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, OnEvent);
         WinEvents.Hook(EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND, OnEvent);
@@ -135,9 +137,12 @@ public static class TuckManager
         catch (Exception e) { Log.Error("journal not recovered", e); }
     }
 
+    /// <summary>Set once this process has read the previous journal and written its own: only then may it save over the file.</summary>
+    static bool journalTaken;
+
     static void SaveJournal()
     {
-        if (Demo) return;
+        if (Demo || !journalTaken) return;
         try { Journal.Save(Journal.FilePath, journal); }
         catch (Exception e) { Log.Error("journal not saved", e); }
     }
@@ -299,7 +304,7 @@ public static class TuckManager
         var t = new Tucked
         {
             Hwnd = hwnd, Pid = pid, ProcStart = ProcessInfo.StartTime(pid)!.Value, Exe = exe, Class = TopWindows.ClassOf(hwnd),
-            WasMaximized = wasMax, Icon = demo?.Icon ?? (exe.Length > 0 ? ExeIcon.Get(exe) : null), DemoExe = demo?.Exe, Plan = plan,
+            WasMaximized = wasMax, WasTopmost = Win.IsTopmost(hwnd), Icon = demo?.Icon ?? (exe.Length > 0 ? ExeIcon.Get(exe) : null), DemoExe = demo?.Exe, Plan = plan,
             Title = demo?.Title ?? TopWindows.TitleOf(hwnd),
         };
         var wasForeground = Win.Foreground == hwnd;
@@ -370,12 +375,12 @@ public static class TuckManager
                 catch (Exception e) { Log.Error("location hook", e); }
         }
         var tab = new TabWindow();
-        tab.Hovered += () => { if (t.State == TuckState.Parked && HoverOpens(t)) SlideOut(t, activate: false); };
+        tab.Hovered += () => { if (t.State == TuckState.Parked && HoverOpens(t)) SlideOut(t, activate: false, peek: true); };
         tab.Clicked += () => SlideOut(t, activate: true);
         tab.DpiMoved += ScheduleRelayout;
         tab.DragMoved += p => DragTab(t, p);
         tab.DragEnded += () => DropTab(t);
-        tab.DragOver += () => { if (t.State == TuckState.Parked) SlideOut(t, activate: false); }; // a file for the window: it comes out to take it
+        tab.DragOver += () => { if (t.State == TuckState.Parked) SlideOut(t, activate: false, peek: true); }; // a file for the window: it comes out to take it
         tab.Menu = () => TabMenu(t);
         t.Tab = tab;
         RelayoutTabs();
@@ -389,6 +394,7 @@ public static class TuckManager
         if (!ByHwnd.Remove(t.Hwnd)) return;
         Windows.Remove(t);
         t.Anim = null;
+        Unpeek(t);
         t.Debounce?.Stop();
         t.Tab?.Close();
         t.Tab = null;
@@ -468,18 +474,45 @@ public static class TuckManager
 
     // ---------- slides ----------
 
-    public static void SlideOut(Tucked t, bool activate)
+    /// <summary>
+    /// Out to the shown place. activate: also give it the focus (a click, the Windows page, the tray, a rule's key) and pin it.
+    /// peek: out by hover or a file over the tab, without the focus: topmost while it is out, so a maximized active window
+    /// does not cover it; taken back when it slides in, is pinned or leaves.
+    /// </summary>
+    public static void SlideOut(Tucked t, bool activate, bool peek = false)
     {
         if (!ByHwnd.ContainsKey(t.Hwnd)) return;
         var h = t.Hwnd;
         if (Win.IsIconic(h)) { if (activate) Win.Restore(h); else Win.ShowNoActivate(h); }
+        if (peek && !activate && !t.WasTopmost && !t.Peeking && !Demo) { Win.SetTopmost(h, true, Win.IsHung(h)); t.Peeking = true; }
         if (t.State == TuckState.Parked || t.Anim is not null) Slide(t, t.Plan.Shown.Location, toTop: true, syncFirst: false, done: null);
         t.State = activate || t.State == TuckState.OutPinned ? TuckState.OutPinned : TuckState.Out;
         t.LeaveSince = null;
         if (t.Tab is { } tab) { tab.Hide(); tab.Flash = false; }
         if (activate && !Win.Activate(h)) Log.Info("activation refused by Windows");
+        if (t.State == TuckState.OutPinned) Unpeek(t); // active now: above the others the usual way
         if (!LeaveTimer.IsEnabled) LeaveTimer.Start();
         Changed?.Invoke();
+    }
+
+    /// <summary>Out and in use: stays until the focus goes to another program.</summary>
+    static void Pin(Tucked t)
+    {
+        t.State = TuckState.OutPinned;
+        Unpeek(t);
+        Changed?.Invoke();
+    }
+
+    static void Unpeek(Tucked t)
+    {
+        if (t.PeekDialog != 0)
+        {
+            if (Win.IsWindow(t.PeekDialog)) Win.SetTopmost(t.PeekDialog, false, Win.IsHung(t.PeekDialog));
+            t.PeekDialog = 0;
+        }
+        if (!t.Peeking) return;
+        t.Peeking = false;
+        if (Win.IsWindow(t.Hwnd) && !t.WasTopmost) Win.SetTopmost(t.Hwnd, false, Win.IsHung(t.Hwnd));
     }
 
     public static void SlideIn(Tucked t)
@@ -491,9 +524,10 @@ public static class TuckManager
         {
             // Minimized while out: it would come back at the shown place; make that the parked place
             Win.ShiftMinimized(t.Hwnd, new Size(t.Plan.Parked.X - t.Plan.Shown.X, t.Plan.Parked.Y - t.Plan.Shown.Y), Win.IsHung(t.Hwnd));
+            Unpeek(t);
             ShowTab(t);
         }
-        else Slide(t, t.Plan.Parked.Location, toTop: false, syncFirst: false, done: () => ShowTab(t));
+        else Slide(t, t.Plan.Parked.Location, toTop: false, syncFirst: false, done: () => { Unpeek(t); ShowTab(t); });
         Changed?.Invoke();
     }
 
@@ -555,8 +589,7 @@ public static class TuckManager
             var over = Demo ? under == t.Hwnd : underPid == t.Pid;
             if (down && over && Win.Frame(t.Hwnd) is { } f && f.Contains(cursor))
             {
-                t.State = TuckState.OutPinned; // a click inside the window
-                Changed?.Invoke();
+                Pin(t); // a click inside the window
                 continue;
             }
             if (Geometry.ShouldSlideIn(false, down, over, cursor, t.Plan.Shown, LeaveMargin))
@@ -636,6 +669,7 @@ public static class TuckManager
             case EVENT_OBJECT_SHOW: OnShow(h); break;
             case EVENT_OBJECT_HIDE:
                 if (ByHwnd.TryGetValue(h, out var hidden)) { hidden.Hidden = true; hidden.Tab?.Hide(); }
+                else if (Windows.FirstOrDefault(x => x.PeekDialog == h) is { } asked) asked.PeekDialog = 0; // the dialog closed
                 break;
             case EVENT_OBJECT_DESTROY:
                 if (ByHwnd.TryGetValue(h, out var gone)) { Remove(gone); Log.Info($"{gone.Program} closed while tucked"); }
@@ -660,11 +694,15 @@ public static class TuckManager
         if (t is not null)
         {
             if (t.State != TuckState.OutPinned) SlideOut(t, activate: false);
-            t.State = TuckState.OutPinned;
+            Pin(t);
             if (h != t.Hwnd) BringAlong(h, t);
         }
         var pid = TopWindows.Pid(h);
-        foreach (var o in Windows.Where(x => x.State == TuckState.OutPinned && x != t && x.Pid != pid).ToList()) SlideIn(o);
+        foreach (var o in Windows.Where(x => x.State == TuckState.OutPinned && x != t && x.Pid != pid).ToList())
+        {
+            Log.Info($"{o.Program} slides back: the focus went to another program");
+            SlideIn(o);
+        }
         CheckFullscreen();
     }
 
@@ -679,9 +717,20 @@ public static class TuckManager
         var owner = Win.Owner(h);
         if (owner != 0 && FindTucked(owner) is { } o && Win.IsVisible(h) && Win.IsDialogLike(h))
         {
+            // A dialog of a program in the background opens without the focus, under the active window: then the owner peeks
+            // (topmost, the dialog above it) and stays pinned; the peek ends when the dialog or anything else gets the focus
+            var focused = FindTucked(Win.Foreground) == o;
+            Log.Info($"a dialog of {o.Program} opened while tucked ({(focused ? "focused" : "in the background")})");
             if (o.State != TuckState.OutPinned) SlideOut(o, activate: false);
-            o.State = TuckState.OutPinned;
+            Pin(o);
             BringAlong(h, o);
+            if (!focused && !Win.IsTopmost(h))
+            {
+                // Its program is in the background: the dialog would open under the active window. Topmost (not the owner: a window
+                // with a modal dialog does not keep it) until it gets the focus, closes, or the focus goes to another program
+                Win.SetTopmost(h, true, Win.IsHung(h));
+                o.PeekDialog = h;
+            }
             return;
         }
         if (!paused && (S.Rules.Count > 0 || journal.RescueExes.Count > 0) && TopWindows.Passes(h))

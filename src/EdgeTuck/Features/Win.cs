@@ -54,6 +54,18 @@ public static unsafe class Win
     /// <summary>Synchronous restore of a maximized window before tucking (the window is checked not to be hung first).</summary>
     public static void RestoreNow(nint h) => PInvoke.ShowWindow((HWND)h, SHOW_WINDOW_CMD.SW_RESTORE);
 
+    public static bool IsTopmost(nint h) =>
+        ((WINDOW_EX_STYLE)PInvoke.GetWindowLong((HWND)h, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE)).HasFlag(WINDOW_EX_STYLE.WS_EX_TOPMOST);
+
+    /// <summary>
+    /// A peek by hover: above a maximized active window without taking focus (a background process cannot raise a window above the
+    /// foreground one with HWND_TOP). Only the z-order band, through SetWindowPos; always undone with false.
+    /// </summary>
+    public static void SetTopmost(nint h, bool on, bool async) =>
+        PInvoke.SetWindowPos((HWND)h, new HWND(on ? -1 : -2) /* HWND_TOPMOST / HWND_NOTOPMOST */, 0, 0, 0, 0,
+            SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOOWNERZORDER
+            | (async ? SET_WINDOW_POS_FLAGS.SWP_ASYNCWINDOWPOS : 0));
+
     public static bool IsToolWindow(nint h) =>
         ((WINDOW_EX_STYLE)PInvoke.GetWindowLong((HWND)h, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE)).HasFlag(WINDOW_EX_STYLE.WS_EX_TOOLWINDOW);
 

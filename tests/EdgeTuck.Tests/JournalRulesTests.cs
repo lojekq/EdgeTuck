@@ -65,6 +65,22 @@ public class JournalRulesTests
     }
 
     [TestMethod]
+    public void NullSectionsInSettingsMeanEmpty()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"edgetuck-settings-{Guid.NewGuid():N}.json");
+        try
+        {
+            File.WriteAllText(path, """{ "schema": 1, "edgeTuck": { "rules": null, "animationMs": 90 } }""");
+            var s = Settings.Load(path);
+            Assert.AreEqual(0, s.EdgeTuck.Rules.Count, "rules: null is no rules (1.0.0 crashed at start on it)");
+            Assert.AreEqual(90, s.EdgeTuck.AnimationMs);
+            File.WriteAllText(path, """{ "schema": 1, "edgeTuck": null }""");
+            Assert.AreEqual(150, Settings.Load(path).EdgeTuck.AnimationMs, "edgeTuck: null is the defaults");
+        }
+        finally { foreach (var p in Directory.GetFiles(Path.GetTempPath(), Path.GetFileNameWithoutExtension(path) + "*")) File.Delete(p); }
+    }
+
+    [TestMethod]
     public void RulesMatchByExe()
     {
         Rule[] rules = [new() { Exe = "Discord.exe", Enabled = false }, new() { Exe = "scrcpy.exe", Edge = Edge.Right }];

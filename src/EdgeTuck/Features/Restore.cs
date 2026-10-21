@@ -29,6 +29,7 @@ public static class Restore
         if (!Journal.Matches(e, pid, ProcessInfo.StartTime(pid), TopWindows.ClassOf(h))) return false;
         var hung = Win.IsHung(h);
 
+        if (!e.WasTopmost && Win.IsTopmost(h)) Win.SetTopmost(h, false, hung); // Edge Tuck died during a peek
         if (Win.IsIconic(h))
         {
             // Minimized: SetWindowPos would move the icon, not where it comes back to
