@@ -27,11 +27,12 @@ Edge Tuck slides such a window behind the screen edge and leaves a thin tab ther
 ## Features
 
 - **Hotkey or drag** — `Ctrl+Win+Alt+←/→/↑/↓`, or drag a window past the left, right or bottom edge; a thin tab stays on the edge.
-- **Peek and use** — hover the tab to peek, click it to work in the window, move away and it slides back.
-- **Rules** — scrcpy, a chat, music or a terminal tuck themselves to their edge when they open.
+- **Peek and use** — hover the tab to peek (or click only, if you like), click it to work in the window, move away and it slides back.
+- **Rules** — scrcpy, a chat, music or a terminal tuck themselves to their edge when they open; a title filter, a minimum size and a key to show or hide the window (quake mode for any program).
 - **Out of the way in games** — tabs disappear while a fullscreen app is in front.
 - **Never loses a window** — a journal written before every move and a guard process bring everything back, even after a crash.
-- **Multi-monitor aware** — down to the free part of an edge (a portrait monitor next to an ultrawide) and mixed DPI. No admin, no telemetry, everything local.
+- **Tabs that talk** — a tab lights up when its window wants attention; drag a file onto it and the window comes out; drag the tab along the edge, show the program's icon on it.
+- **Multi-monitor aware** — down to the free part of an edge (a portrait monitor next to an ultrawide), a click tab even on the edge between two monitors, mixed DPI, virtual desktops. No admin, no telemetry, everything local.
 
 ## See it in action
 
@@ -49,8 +50,8 @@ Edge Tuck slides such a window behind the screen edge and leaves a thin tab ther
 Edge Tuck injects nothing into other programs and never hides their windows. It only moves a window past the outer edge of the screen,
 keeps its own small tab next to it and writes a journal before every move. That is why windows come back even after a crash or a power cut.
 
-Edges are counted by parts: on two monitors side by side the shared edge is not used, and on a portrait monitor next to an ultrawide
-only the part of its edge below the seam is free. A window that does not fit there is not tucked, and a note says how much room is free.
+Edges are counted by parts: on a portrait monitor next to an ultrawide only the part of its edge below the seam is free for a hover tab.
+On the part shared with the other monitor the tab opens by click, and the window waits behind an outer edge until then.
 
 ## Download
 
@@ -73,6 +74,8 @@ Try it: click a window and press `Ctrl+Win+Alt+←`, then point at the tab on th
 | Alt+Tab or a taskbar click | A tucked window comes out and stays |
 | The same shortcut again on a window that is out | Back to normal |
 | Right-click the tab | Return the window, or "Always tuck this program here" |
+| Drag the tab along the edge | The window moves along with it |
+| Drag a file onto the tab | The window comes out to take it |
 
 ## Settings
 
@@ -86,7 +89,10 @@ Try it: click a window and press `Ctrl+Win+Alt+←`, then point at the tab on th
 | Tab size | 6 × 64 DIP | Grows with the monitor's scale |
 | Drag past the edge to tuck | on, 50 % | Left, right and bottom edges; this much of the window must be behind the edge |
 | Hide tabs while a fullscreen app is in front | on | Games and fullscreen video |
-| Rules | none | "Always tuck this program here", made from a tab's menu |
+| Slide out when the mouse rests on a tab | on | Off: tabs open by click only |
+| Tabs on edges shared with another monitor | on, open by click | The window waits behind an outer edge and appears at once |
+| Tab with the program's icon | off | A wider tab with the icon |
+| Rules | none | "Always tuck this program here", from a tab's menu or a template (scrcpy, Discord, Spotify, Windows Terminal); title filter, minimum size, own key |
 | Language, theme | Windows | English or Russian, light or dark |
 | Start with Windows | off | Rules work while Edge Tuck runs |
 | Start menu shortcut | on when the exe is in `%LOCALAPPDATA%\Programs\EdgeTuck\` | |
@@ -103,10 +109,10 @@ Settings, the journal of tucked windows (`tucked.json`) and logs live in `%APPDA
 - Or press `Alt+Space` → **Move**, press an arrow key and move the mouse.
 </details>
 
-<details><summary>Why can't I tuck a window to the edge between my two monitors?</summary>
+<details><summary>What happens on the edge between my two monitors?</summary>
 
-The mouse crosses that edge every time it goes from one monitor to the other, so a hover tab there would pop windows out all the time.
-Edge Tuck uses outer edges only, down to the free part of an edge. A click-only tab on a shared edge is planned for 1.0.
+The mouse crosses that edge every time it goes from one monitor to the other, so a tab there opens by click, not by hover (you can change that in Settings).
+The window waits behind an outer edge of its monitor and appears at the shared edge at once.
 </details>
 
 <details><summary>"The window runs as administrator: Edge Tuck cannot move it"</summary>
