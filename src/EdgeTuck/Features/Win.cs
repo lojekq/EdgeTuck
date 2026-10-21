@@ -70,7 +70,7 @@ public static unsafe class Win
     public static bool Activate(nint h)
     {
         if (IsIconic(h)) Restore(h);
-        return PInvoke.SetForegroundWindow((HWND)h) && Foreground == h;
+        return PInvoke.SetForegroundWindow((HWND)h); // GetForegroundWindow can lag a moment behind
     }
 
     /// <summary>
