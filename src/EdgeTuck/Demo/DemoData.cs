@@ -33,7 +33,7 @@ public static class DemoData
             new() { Exe = "scrcpy.exe", Edge = Edge.Right, Monitor = @"\\.\DISPLAY2", Along = 0.744 },
             new() { Exe = "Discord.exe", Edge = Edge.Left, Monitor = @"\\.\DISPLAY1", Along = 0.5 },
             new() { Exe = "Spotify.exe", Edge = Edge.Left, Monitor = @"\\.\DISPLAY2", Along = 0.8, Enabled = false },
-            new() { Exe = "WindowsTerminal.exe", Edge = Edge.Top, Monitor = @"\\.\DISPLAY1", Along = 0.5, AutoTuck = false },
+            new() { Exe = "WindowsTerminal.exe", Edge = Edge.Top, Monitor = @"\\.\DISPLAY1", Along = 0.5, AutoTuck = false, TitleContains = "quake", MinWidth = 800 },
         ];
         if (Args.Current.Screenshot is not null) { ListOnly(); return; } // the page shows them; no windows on the real edges
         System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
