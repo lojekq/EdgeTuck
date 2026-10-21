@@ -117,6 +117,53 @@ public class GeometryTests
     }
 
     [TestMethod]
+    public void FloatingTabOnASharedEdge()
+    {
+        var o = Layouts.Owner;
+        var w = new Rectangle(2000, 300, 760, 480);
+        Assert.AreEqual(TuckFail.SharedEdge, Geometry.Plan(o, Layouts.Display1, Edge.Right, w, floating: false).Fail);
+        var p = Geometry.Plan(o, Layouts.Display1, Edge.Right, w, floating: true).Plan!;
+        Assert.IsTrue(p.Floating);
+        Assert.AreEqual(Rectangle.FromLTRB(2680, 300, 3440, 780), p.Shown, "pressed to the shared edge");
+        Assert.AreEqual(Edge.Left, p.ParkEdge, "waits behind the opposite, outer edge");
+        Assert.AreEqual(Rectangle.FromLTRB(-824, 300, -64, 780), p.Parked);
+        Assert.AreEqual(new Segment(0, 1408), p.Segment, "the tab goes on the shared part");
+
+        // too long for the free part of DISPLAY2's left edge: floats on its shared part, waits behind the right edge
+        var tall = Geometry.Plan(o, Layouts.Display2, Edge.Left, new Rectangle(3600, 100, 450, 1100), floating: true).Plan!;
+        Assert.IsTrue(tall.Floating);
+        Assert.AreEqual(new Segment(0, 1520), tall.Segment);
+        Assert.AreEqual(4944, tall.Parked.Left);
+        Assert.IsNotNull(Geometry.Plan(o, Layouts.Display2, Edge.Left, new Rectangle(3600, 1600, 760, 480), floating: true).Plan is { Floating: false }, "a free part still wins");
+
+        Assert.AreEqual(TuckFail.SharedEdge, Geometry.TuckFloating(Layouts.Single, Layouts.Single[0], Edge.Left, w).Fail, "nothing shared on one monitor");
+    }
+
+    [TestMethod]
+    public void EveryFloatingPlanKeepsTheParkedInvariant()
+    {
+        var floats = 0;
+        foreach (var (name, layout) in Layouts.All)
+            foreach (var m in layout)
+                foreach (var e in Geometry.Edges)
+                    foreach (var size in Windows)
+                    {
+                        var w = m.Work;
+                        var frame = new Rectangle(w.Left + (w.Width - size.Width) / 2, w.Top + (w.Height - size.Height) / 2, size.Width, size.Height);
+                        if (Geometry.TuckFloating(layout, m, e, frame).Plan is not { } p) continue;
+                        floats++;
+                        var what = $"{name} {m.Device} {e} {size}";
+                        Assert.IsTrue(w.Contains(p.Shown), what);
+                        Assert.IsFalse(layout.Any(n => n.Bounds.IntersectsWith(p.Parked)), $"{what}: parked on a monitor");
+                        Assert.AreEqual(Geometry.ParkGap, Geometry.Distance(p.Parked, m.Bounds), what);
+                        foreach (var n in layout.Where(n => n != m)) Assert.IsTrue(Geometry.Distance(p.Parked, n.Bounds) >= Geometry.Margin, what);
+                        var along = Geometry.Along(p.Shown, e);
+                        Assert.IsTrue(along.Start >= p.Segment.Start && along.End <= p.Segment.End, $"{what}: shown outside the shared segment");
+                    }
+        Assert.IsTrue(floats > 20, $"only {floats} floating plans");
+    }
+
+    [TestMethod]
     public void DragGesture()
     {
         var s = Layouts.Single;

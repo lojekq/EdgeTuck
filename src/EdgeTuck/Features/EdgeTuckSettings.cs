@@ -32,6 +32,10 @@ namespace EdgeTuck.Features
         public bool Gesture { get; set; } = true;
         public int GesturePercent { get; set; } = 50;
         public bool HideTabsInFullscreen { get; set; } = true;
+        // v1.0
+        public bool SlideOutOnHover { get; set; } = true;      // false = click only
+        public bool SharedEdges { get; set; } = true;          // a floating tab on an edge shared with another monitor
+        public bool HoverOnSharedEdges { get; set; }           // the mouse crosses the seam all the time: click only by default
         public List<Rule> Rules { get; set; } = [];
 
         public string? Hotkey(Edge e) => e switch

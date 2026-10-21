@@ -217,7 +217,7 @@ public static class TuckManager
         if (Win.Frame(hwnd) is not { } frame) return false;
         if (at is { } a) frame = new Rectangle(a.Location, frame.Size);
 
-        var r = Geometry.Tuck(monitors, m, e, frame);
+        var r = Geometry.Plan(monitors, m, e, frame, S.SharedEdges);
         if (r.Plan is not { } plan)
         {
             if (wasMax) Win.Maximize(hwnd);
@@ -319,7 +319,7 @@ public static class TuckManager
                 catch (Exception e) { Log.Error("location hook", e); }
         }
         var tab = new TabWindow();
-        tab.Hovered += () => { if (t.State == TuckState.Parked) SlideOut(t, activate: false); };
+        tab.Hovered += () => { if (t.State == TuckState.Parked && HoverOpens(t)) SlideOut(t, activate: false); };
         tab.Clicked += () => SlideOut(t, activate: true);
         tab.DpiMoved += ScheduleRelayout;
         tab.Menu = () => TabMenu(t);
@@ -428,7 +428,7 @@ public static class TuckManager
     {
         var h = t.Hwnd;
         var from = t.Anim?.Current ?? Win.Frame(h)?.Location ?? to;
-        var ms = S.AnimationMs;
+        var ms = t.Plan.Floating ? 0 : S.AnimationMs; // a floating tab's window jumps from another edge: no slide
         var hung = Win.IsHung(h);
         if (ms <= 0 || hung || from == to)
         {
@@ -664,7 +664,7 @@ public static class TuckManager
     static bool Replan(Tucked t, Size size)
     {
         var m = monitors.FirstOrDefault(d => d.Device == t.Plan.Monitor.Device);
-        var r = m is null ? default : Geometry.Tuck(monitors, m, t.Plan.Edge, new Rectangle(t.Plan.Shown.Location, size));
+        var r = m is null ? default : Geometry.Plan(monitors, m, t.Plan.Edge, new Rectangle(t.Plan.Shown.Location, size), S.SharedEdges);
         if (r.Plan is not { } plan)
         {
             Log.Info($"{t.Program} no longer fits on {t.Plan.Edge} of {t.Plan.Monitor.Device}: {(m is null ? "monitor gone" : r.Fail)}");
@@ -688,6 +688,7 @@ public static class TuckManager
     static void CheckFullscreen()
     {
         if (Windows.Count == 0) { FullscreenTimer.Stop(); return; }
+        foreach (var t in Windows) if (t.Tab is { } tab) VirtualDesktops.Follow(tab.Handle, t.Hwnd); // v1.0: the tab stays on its window's desktop
         string? device = null;
         var fg = Win.Foreground;
         if (S.HideTabsInFullscreen && fg != 0 && !ByHwnd.ContainsKey(fg) && TopWindows.Pid(fg) != Environment.ProcessId
@@ -811,6 +812,9 @@ public static class TuckManager
         }
         Win.Activate(Win.Shell);
     }
+
+    /// <summary>Hover opens a tab unless click-only is on; a floating tab on a shared edge only if allowed (the mouse crosses the seam all the time).</summary>
+    static bool HoverOpens(Tucked t) => S.SlideOutOnHover && (!t.Plan.Floating || S.HoverOnSharedEdges);
 
     static bool Near(Point a, Point b) => Math.Abs(a.X - b.X) <= 2 && Math.Abs(a.Y - b.Y) <= 2;
 

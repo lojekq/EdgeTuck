@@ -15,8 +15,11 @@ public readonly record struct Segment(int Start, int End)
 
 public enum TuckFail { None, SharedEdge, TooLong, TooBig }
 
-/// <summary>Frame rectangles (DWMWA_EXTENDED_FRAME_BOUNDS) of a tucked window: on screen and behind the edge.</summary>
-public sealed record TuckPlan(Display Monitor, Edge Edge, Rectangle Shown, Rectangle Parked, Segment Segment);
+/// <summary>
+/// Frame rectangles (DWMWA_EXTENDED_FRAME_BOUNDS) of a tucked window: on screen and behind the edge.
+/// Floating (v1.0): Edge and Segment are a shared part of an edge where only the tab sits; the window waits behind ParkEdge, an outer edge of the same monitor.
+/// </summary>
+public sealed record TuckPlan(Display Monitor, Edge Edge, Rectangle Shown, Rectangle Parked, Segment Segment, bool Floating = false, Edge ParkEdge = Edge.Left);
 
 /// <summary>Plan, or why not; FreePx is the longest free segment for TooLong.</summary>
 public readonly record struct TuckResult(TuckPlan? Plan, TuckFail Fail, int FreePx = 0);
@@ -104,16 +107,9 @@ public static class Geometry
         if (fits.Count == 0) return new(null, TuckFail.TooLong, segments.Max(s => s.Length));
         var (segment, start) = fits[0];
 
-        var w = m.Work;
         var b = m.Bounds;
         var (width, height) = (frame.Width, frame.Height);
-        var shown = e switch
-        {
-            Edge.Left => new Rectangle(w.Left, start, width, height),
-            Edge.Right => new Rectangle(w.Right - width, start, width, height),
-            Edge.Top => new Rectangle(start, w.Top, width, height),
-            _ => new Rectangle(start, w.Bottom - height, width, height),
-        };
+        var shown = Pressed(m, e, start, frame.Size);
         var parked = e switch
         {
             Edge.Left => shown with { X = b.Left - ParkGap - width },
@@ -122,6 +118,67 @@ public static class Geometry
             _ => shown with { Y = b.Bottom + ParkGap },
         };
         return new(new(m, e, shown, parked, segment), TuckFail.None);
+    }
+
+    /// <summary>The parts of an edge (within the work area) that are not free: next to another monitor. Tabs there float (v1.0).</summary>
+    public static List<Segment> SharedSegments(IReadOnlyList<Display> monitors, Display m, Edge e, int depth)
+    {
+        var edge = Along(m.Bounds, e);
+        var work = Along(m.Work, e);
+        var shared = new List<Segment> { new(Math.Max(edge.Start, work.Start), Math.Min(edge.End, work.End)) };
+        foreach (var f in FreeSegments(monitors, m, e, depth)) shared = shared.SelectMany(s => Subtract(s, f)).ToList();
+        return shared.Where(s => s.Length > 0).ToList();
+    }
+
+    /// <summary>
+    /// A tab on a shared part of edge e (v1.0): the window shows pressed to e, but waits behind an outer edge of the same monitor
+    /// (the opposite one first), so the parked invariant is the usual one. Slides are instant, the tab opens by click.
+    /// </summary>
+    public static TuckResult TuckFloating(IReadOnlyList<Display> monitors, Display m, Edge e, Rectangle frame)
+    {
+        var shared = SharedSegments(monitors, m, e, ParkGap + Across(frame.Size, e));
+        if (shared.Count == 0) return new(null, TuckFail.SharedEdge);
+        var workAcross = IsVertical(e) ? m.Work.Width : m.Work.Height;
+        if (Across(frame.Size, e) > workAcross) return new(null, TuckFail.TooBig);
+        var along = Along(frame, e);
+        var fits = shared.Where(s => s.Length >= along.Length)
+            .Select(s => (Segment: s, Start: Math.Clamp(along.Start, s.Start, s.End - along.Length)))
+            .OrderBy(x => Math.Abs(x.Start - along.Start))
+            .ToList();
+        if (fits.Count == 0) return new(null, TuckFail.TooLong, shared.Max(s => s.Length));
+        var (segment, start) = fits[0];
+        var shown = Pressed(m, e, start, frame.Size);
+        foreach (var park in ParkOrder(e))
+            if (Tuck(monitors, m, park, shown).Plan is { } p)
+                return new(new(m, e, shown, p.Parked, segment, Floating: true, ParkEdge: park), TuckFail.None);
+        return new(null, TuckFail.SharedEdge);
+    }
+
+    /// <summary>Free part of the edge first; else (v1.0, when allowed) a floating tab on its shared part. The first refusal is the one reported.</summary>
+    public static TuckResult Plan(IReadOnlyList<Display> monitors, Display m, Edge e, Rectangle frame, bool floating)
+    {
+        var r = Tuck(monitors, m, e, frame);
+        if (r.Plan is not null || !floating || r.Fail == TuckFail.TooBig) return r;
+        var f = TuckFloating(monitors, m, e, frame);
+        return f.Plan is not null ? f : r;
+    }
+
+    static IEnumerable<Edge> ParkOrder(Edge e) =>
+        new[] { Opposite(e), Edge.Bottom, Edge.Top, Edge.Left, Edge.Right }.Where(x => x != e).Distinct();
+
+    public static Edge Opposite(Edge e) => e switch { Edge.Left => Edge.Right, Edge.Right => Edge.Left, Edge.Top => Edge.Bottom, _ => Edge.Top };
+
+    /// <summary>A window of this size at `start` along edge e of m, pressed to the edge of the work area.</summary>
+    static Rectangle Pressed(Display m, Edge e, int start, Size size)
+    {
+        var w = m.Work;
+        return e switch
+        {
+            Edge.Left => new Rectangle(w.Left, start, size.Width, size.Height),
+            Edge.Right => new Rectangle(w.Right - size.Width, start, size.Width, size.Height),
+            Edge.Top => new Rectangle(start, w.Top, size.Width, size.Height),
+            _ => new Rectangle(start, w.Bottom - size.Height, size.Width, size.Height),
+        };
     }
 
     /// <summary>The monitor with the largest part of r; if r is on none, the nearest one.</summary>
