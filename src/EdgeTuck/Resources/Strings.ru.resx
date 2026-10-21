@@ -134,4 +134,10 @@
   <data name="Settings.Install" xml:space="preserve"><value>Установка</value></data>
   <data name="Settings.Installed" xml:space="preserve"><value>Установлена в {0}</value></data>
   <data name="Settings.NotInstalled" xml:space="preserve"><value>Работает без установки, из {0}</value></data>
+  <data name="Settings.TabColor" xml:space="preserve"><value>Цвет язычка</value></data>
+  <data name="Settings.TabColor.Note" xml:space="preserve"><value>Цвет значка подстраивается под светлую или тёмную тему; бесцветному значку достаётся акцентный цвет</value></data>
+  <data name="Settings.TabColor.Icon" xml:space="preserve"><value>По значку программы</value></data>
+  <data name="Settings.TabColor.Accent" xml:space="preserve"><value>Акцентный цвет Windows</value></data>
+  <data name="Settings.TabColor.Custom" xml:space="preserve"><value>Свой цвет</value></data>
+  <data name="Color.Auto" xml:space="preserve"><value>Как в настройках</value></data>
 </root>

@@ -33,7 +33,10 @@
                             <StackPanel Orientation="Horizontal">
                                 <ui:Button Content="{l:T Windows.Show}" Icon="{ui:SymbolIcon Eye24}" Margin="0,0,8,0" Click="OnShow" />
                                 <ui:Button Content="{l:T Windows.Return}" Icon="{ui:SymbolIcon ArrowExportLtr24}" Margin="0,0,8,0" Click="OnReturn" />
-                                <ui:Button Content="{l:T Windows.Remember}" Icon="{ui:SymbolIcon Pin24}" Click="OnRemember" />
+                                <ui:Button Content="{l:T Windows.Remember}" Icon="{ui:SymbolIcon Pin24}" Margin="0,0,8,0" Click="OnRemember" />
+                                <ui:Button ToolTip="{l:T Settings.TabColor}" Click="OnColor" Padding="10,8">
+                                    <Border Width="16" Height="16" CornerRadius="4" Background="{Binding TabBrush, TargetNullValue={StaticResource SystemAccentBrush}}" />
+                                </ui:Button>
                             </StackPanel>
                         </ui:CardControl>
                     </DataTemplate>

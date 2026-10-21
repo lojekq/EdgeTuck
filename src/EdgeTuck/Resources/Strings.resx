@@ -134,4 +134,10 @@ The program, its Start menu shortcut, autostart and the entry in Settings → Ap
   <data name="Settings.Install" xml:space="preserve"><value>Installation</value></data>
   <data name="Settings.Installed" xml:space="preserve"><value>Installed in {0}</value></data>
   <data name="Settings.NotInstalled" xml:space="preserve"><value>Runs without installing, from {0}</value></data>
+  <data name="Settings.TabColor" xml:space="preserve"><value>Tab color</value></data>
+  <data name="Settings.TabColor.Note" xml:space="preserve"><value>The icon's color is made readable on the light or dark theme; a colorless icon gets the accent color</value></data>
+  <data name="Settings.TabColor.Icon" xml:space="preserve"><value>From the program's icon</value></data>
+  <data name="Settings.TabColor.Accent" xml:space="preserve"><value>Windows accent color</value></data>
+  <data name="Settings.TabColor.Custom" xml:space="preserve"><value>My color</value></data>
+  <data name="Color.Auto" xml:space="preserve"><value>As in Settings</value></data>
 </root>

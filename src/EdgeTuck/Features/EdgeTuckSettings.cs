@@ -40,6 +40,9 @@ namespace EdgeTuck.Features
         public bool SharedEdges { get; set; } = true;          // a floating tab on an edge shared with another monitor
         public bool HoverOnSharedEdges { get; set; }           // the mouse crosses the seam all the time: click only by default
         public bool TabIcon { get; set; }                      // a wider tab with the program's icon
+        // v1.1
+        public string TabColorMode { get; set; } = "icon";     // icon | accent | custom
+        public string TabColor { get; set; } = "#0A84FF";      // the custom color
         List<Rule> rules = [];
 
         /// <summary>"rules": null in a hand-edited file means no rules (Edge Tuck 1.0.0 crashed on it at start).</summary>
@@ -67,7 +70,7 @@ namespace EdgeTuck.Features
     {
         string exe = "";
         bool autoTuck = true, enabled = true;
-        string? titleContains, hotkey;
+        string? titleContains, hotkey, tabColor;
         int minWidth, minHeight;
 
         public string Exe { get => exe; set { exe = value; Changed(); } }
@@ -81,6 +84,9 @@ namespace EdgeTuck.Features
         public int MinWidth { get => minWidth; set { minWidth = Math.Max(0, value); Changed(); } }
         public int MinHeight { get => minHeight; set { minHeight = Math.Max(0, value); Changed(); } }
         public string? Hotkey { get => hotkey; set { hotkey = value; Changed(); } }
+        /// <summary>v1.1: this program's tabs in this color ("#RRGGBB"); null = as in Settings.</summary>
+        public string? TabColor { get => tabColor; set { tabColor = value; Changed(); Changed(nameof(TabBrush)); } }
+        [JsonIgnore] public System.Windows.Media.Brush? TabBrush => TabColors.Parse(TabColor) is { } c ? new System.Windows.Media.SolidColorBrush(c) : null;
 
         [JsonIgnore] public string Detail => $"{Loc.T("Edge." + Edge)} · {(Monitor is null ? "" : Tucked.MonitorName(Monitor))}";
 

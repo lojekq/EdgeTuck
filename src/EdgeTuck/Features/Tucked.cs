@@ -16,6 +16,7 @@ public sealed class Tucked : INotifyPropertyChanged
     TuckPlan plan = null!;
     TuckState state;
     string title = "";
+    string? tabColor;
 
     public required nint Hwnd { get; init; }
     public required int Pid { get; init; }
@@ -39,6 +40,15 @@ public sealed class Tucked : INotifyPropertyChanged
         get => state;
         set { state = value; Changed(); Changed(nameof(Detail)); }
     }
+
+    /// <summary>v1.1: this window's own tab color from the Windows page ("#RRGGBB"); null = its rule or Settings.</summary>
+    public string? TabColor
+    {
+        get => tabColor;
+        set { tabColor = value; Changed(); Changed(nameof(TabBrush)); }
+    }
+
+    public System.Windows.Media.Brush? TabBrush => TabColors.Parse(TabColor) is { } c ? new System.Windows.Media.SolidColorBrush(c) : null;
 
     public string Title
     {
@@ -75,8 +85,8 @@ public sealed class Tucked : INotifyPropertyChanged
     void Changed([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new(p));
 }
 
-/// <summary>One slide: frames every 16 ms, ease-out.</summary>
-internal sealed class Anim(Point from, Point to, int ms, bool toTop, Action? done)
+/// <summary>One slide: a frame per display refresh, position from the clock and an easing curve.</summary>
+internal sealed class Anim(Point from, Point to, int ms, bool toTop, Action? done, Func<double, double> ease)
 {
     public readonly Point From = from, To = to;
     public readonly long Started = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -84,12 +94,14 @@ internal sealed class Anim(Point from, Point to, int ms, bool toTop, Action? don
     public readonly Action? Done = done;
     public bool ToTop = toTop;                 // HWND_TOP on the first frame only
     public Point Current = from;
+    public Point Sent = from;                  // the last frame asked of the window
+    public long SentAt;
 
     /// <summary>Position now; finished once t reaches 1.</summary>
     public (Point P, bool Finished) Step()
     {
         var t = Math.Min(1, System.Diagnostics.Stopwatch.GetElapsedTime(Started).TotalMilliseconds / Ms);
-        var k = 1 - Math.Pow(1 - t, 3);
+        var k = ease(t);
         Current = new((int)Math.Round(From.X + (To.X - From.X) * k), (int)Math.Round(From.Y + (To.Y - From.Y) * k));
         return (Current, t >= 1);
     }

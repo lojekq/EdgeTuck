@@ -44,5 +44,12 @@ public partial class RulesPage
         if (e.PropertyName == nameof(Rule.Hotkey)) TuckManager.RegisterRuleHotkeys();
     }
 
+    /// <summary>v1.1: this program's tab color.</summary>
+    void OnColor(object sender, RoutedEventArgs e)
+    {
+        var r = (Rule)((FrameworkElement)sender).DataContext;
+        ColorMenu.Open((FrameworkElement)sender, r.TabColor, hex => { r.TabColor = hex; TuckManager.RefreshTabs(); });
+    }
+
     void OnDelete(object sender, RoutedEventArgs e) => TuckManager.RemoveRule(((Rule)((FrameworkElement)sender).DataContext).Exe);
 }

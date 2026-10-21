@@ -66,8 +66,41 @@ public static class SettingsSection
         shared.Children.Add(new FrameworkElement { Width = 24 });
         shared.Children.Add(Toggle(S.SharedEdges, v => S.SharedEdges = v));
         panel.Children.Add(Card("Settings.SharedEdges", SymbolRegular.SplitVertical24, shared, "Settings.SharedEdges.Note"));
+        panel.Children.Add(Card("Settings.TabColor", SymbolRegular.Color24, ColorChooser(), "Settings.TabColor.Note"));
         panel.Children.Add(Card("Settings.TabIcon", SymbolRegular.Apps24, Toggle(S.TabIcon, v => { S.TabIcon = v; TuckManager.RefreshTabs(); })));
         return panel;
+    }
+
+    /// <summary>v1.1: By the icon / Windows accent / My color, with a palette and HEX for my color.</summary>
+    static FrameworkElement ColorChooser()
+    {
+        var mode = new ComboBox { MinWidth = 200 };
+        foreach (var (tag, key) in new[] { ("icon", "Settings.TabColor.Icon"), ("accent", "Settings.TabColor.Accent"), ("custom", "Settings.TabColor.Custom") })
+            mode.Items.Add(new ComboBoxItem { Tag = tag, Content = Loc.T(key) });
+        mode.SelectedItem = mode.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == S.TabColorMode) ?? mode.Items[0];
+        var hex = new Wpf.Ui.Controls.TextBox { Text = S.TabColor, Width = 110, MaxLength = 7 };
+        var swatches = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        var custom = new StackPanel { Children = { hex, swatches } };
+        void Apply()
+        {
+            custom.Visibility = S.TabColorMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
+            Settings.Save();
+            TuckManager.RefreshTabs();
+        }
+        foreach (var c in TabColors.Palette)
+        {
+            var b = new Wpf.Ui.Controls.Button { Padding = new Thickness(4), Margin = new Thickness(0, 0, 4, 0), Content = ColorMenu.Swatch(new System.Windows.Media.SolidColorBrush(TabColors.Parse(c)!.Value)), ToolTip = c };
+            b.Click += (_, _) => { S.TabColor = c; hex.Text = c; Apply(); };
+            swatches.Children.Add(b);
+        }
+        hex.LostFocus += (_, _) =>
+        {
+            if (TabColors.Parse(hex.Text) is { } parsed) { S.TabColor = TabColors.Hex(parsed); Apply(); }
+            hex.Text = S.TabColor;
+        };
+        mode.SelectionChanged += (_, _) => { S.TabColorMode = (string)((ComboBoxItem)mode.SelectedItem).Tag; Apply(); };
+        custom.Visibility = S.TabColorMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
+        return new StackPanel { HorizontalAlignment = HorizontalAlignment.Right, Children = { mode, custom } };
     }
 
     static CardControl Card(string key, SymbolRegular icon, UIElement content, string? noteKey = null)

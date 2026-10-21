@@ -226,6 +226,16 @@ public static class Geometry
         return !shown.Contains(cursor);
     }
 
+    /// <summary>Slide out: quick start, soft landing at the edge (cubic ease-out).</summary>
+    public static double EaseOut(double t) => 1 - Math.Pow(1 - Math.Clamp(t, 0, 1), 3);
+
+    /// <summary>Slide in and tuck: gentle start and stop (cubic ease-in-out).</summary>
+    public static double EaseInOut(double t)
+    {
+        t = Math.Clamp(t, 0, 1);
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2;
+    }
+
     /// <summary>DIP → physical px on a monitor (6 DIP at 125 % = 8 px).</summary>
     public static int Px(int dip, int dpi) => (int)Math.Round(dip * dpi / 96.0, MidpointRounding.AwayFromZero);
 

@@ -42,6 +42,7 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <ui:TextBlock Text="{l:T Rules.TitleContains}" VerticalAlignment="Center" Margin="0,4,16,4" />
                                 <ui:TextBox Grid.Column="1" Text="{Binding TitleContains, UpdateSourceTrigger=LostFocus}" PlaceholderText="{l:T Rules.TitleHint}"
@@ -55,6 +56,10 @@
                                 </StackPanel>
                                 <ui:TextBlock Grid.Row="2" Text="{l:T Rules.Hotkey}" VerticalAlignment="Center" Margin="0,4,16,4" />
                                 <l:HotkeyBox Grid.Row="2" Grid.Column="1" Hotkey="{Binding Hotkey}" HorizontalAlignment="Left" Margin="0,4" />
+                                <ui:TextBlock Grid.Row="3" Text="{l:T Settings.TabColor}" VerticalAlignment="Center" Margin="0,4,16,4" />
+                                <ui:Button Grid.Row="3" Grid.Column="1" HorizontalAlignment="Left" Margin="0,4" Padding="10,8" Click="OnColor">
+                                    <Border Width="16" Height="16" CornerRadius="4" Background="{Binding TabBrush, TargetNullValue={StaticResource SystemAccentBrush}}" />
+                                </ui:Button>
                             </Grid>
                         </ui:CardExpander>
                     </DataTemplate>

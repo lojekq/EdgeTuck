@@ -27,4 +27,11 @@ public partial class WindowsPage
     void OnShow(object sender, RoutedEventArgs e) => TuckManager.Show(Of(sender));
     void OnReturn(object sender, RoutedEventArgs e) => TuckManager.Untuck(Of(sender), move: true);
     void OnRemember(object sender, RoutedEventArgs e) => TuckManager.AddRule(Of(sender));
+
+    /// <summary>v1.1: this window's own tab color.</summary>
+    void OnColor(object sender, RoutedEventArgs e)
+    {
+        var t = Of(sender);
+        ColorMenu.Open((FrameworkElement)sender, t.TabColor, hex => { t.TabColor = hex; TuckManager.RefreshTabs(); });
+    }
 }

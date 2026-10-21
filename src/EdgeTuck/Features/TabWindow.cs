@@ -22,6 +22,7 @@ public sealed class TabWindow : Window
     readonly DispatcherTimer hover = new();
     readonly DispatcherTimer flash = new() { Interval = TimeSpan.FromMilliseconds(500) };
     System.Drawing.Rectangle placed;
+    Color? color;
     Point? pressedAt;
     bool dragging;
 
@@ -113,8 +114,25 @@ public sealed class TabWindow : Window
         {
             if (value == flash.IsEnabled) return;
             if (value) { bar.SetResourceReference(Border.BackgroundProperty, "SystemFillColorCautionBrush"); flash.Start(); }
-            else { flash.Stop(); bar.SetResourceReference(Border.BackgroundProperty, "SystemAccentBrush"); bar.Opacity = IsMouseOver ? 1 : Idle; }
+            else { flash.Stop(); Paint(); bar.Opacity = IsMouseOver ? 1 : Idle; }
         }
+    }
+
+    /// <summary>v1.1: the tab's color; null = the Windows accent (follows it).</summary>
+    public Color? Color
+    {
+        set
+        {
+            if (color == value) return;
+            color = value;
+            if (!flash.IsEnabled) Paint();
+        }
+    }
+
+    void Paint()
+    {
+        if (color is { } c) bar.Background = new SolidColorBrush(c);
+        else bar.SetResourceReference(Border.BackgroundProperty, "SystemAccentBrush");
     }
 
     /// <summary>v1.0: the program's icon on a wide tab; null for the thin one.</summary>

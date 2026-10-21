@@ -34,7 +34,7 @@ public static class TuckManager
     static string? fullscreenDevice;
     static bool started, exiting, paused;
 
-    static readonly DispatcherTimer AnimTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
+    static bool animating; // CompositionTarget.Rendering is subscribed only while something slides: no idle cost
     static readonly DispatcherTimer LeaveTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     static readonly DispatcherTimer FullscreenTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     static readonly DispatcherTimer DisplayDebounce = new() { Interval = TimeSpan.FromSeconds(1.5) };
@@ -68,7 +68,6 @@ public static class TuckManager
         if (started) return;
         started = true;
         monitors = Monitors.Snapshot();
-        AnimTimer.Tick += (_, _) => AnimTick();
         LeaveTimer.Tick += (_, _) => LeaveTick();
         FullscreenTimer.Tick += (_, _) => CheckFullscreen();
         DisplayDebounce.Tick += (_, _) => { DisplayDebounce.Stop(); Relayout(); };
@@ -314,7 +313,7 @@ public static class TuckManager
         SaveJournal();
 
         Add(t);
-        if (!Slide(t, plan.Parked.Location, toTop: false, syncFirst: true, done: () => { ShowTab(t); Verify(t); }))
+        if (!Slide(t, plan.Parked.Location, toTop: false, syncFirst: true, done: () => { ShowTab(t); Verify(t); }, Geometry.EaseInOut))
         {
             Remove(t);
             if (wasMax) Win.Maximize(hwnd);
@@ -485,7 +484,7 @@ public static class TuckManager
         var h = t.Hwnd;
         if (Win.IsIconic(h)) { if (activate) Win.Restore(h); else Win.ShowNoActivate(h); }
         if (peek && !activate && !t.WasTopmost && !t.Peeking && !Demo) { Win.SetTopmost(h, true, Win.IsHung(h)); t.Peeking = true; }
-        if (t.State == TuckState.Parked || t.Anim is not null) Slide(t, t.Plan.Shown.Location, toTop: true, syncFirst: false, done: null);
+        if (t.State == TuckState.Parked || t.Anim is not null) Slide(t, t.Plan.Shown.Location, toTop: true, syncFirst: false, done: null, Geometry.EaseOut);
         t.State = activate || t.State == TuckState.OutPinned ? TuckState.OutPinned : TuckState.Out;
         t.LeaveSince = null;
         if (t.Tab is { } tab) { tab.Hide(); tab.Flash = false; }
@@ -527,16 +526,17 @@ public static class TuckManager
             Unpeek(t);
             ShowTab(t);
         }
-        else Slide(t, t.Plan.Parked.Location, toTop: false, syncFirst: false, done: () => { Unpeek(t); ShowTab(t); });
+        else Slide(t, t.Plan.Parked.Location, toTop: false, syncFirst: false, done: () => { Unpeek(t); ShowTab(t); }, Geometry.EaseInOut);
         Changed?.Invoke();
     }
 
     /// <summary>Starts a slide to `to`. syncFirst: the first frame is a synchronous SetWindowPos whose result is returned.</summary>
-    static bool Slide(Tucked t, Point to, bool toTop, bool syncFirst, Action? done)
+    static bool Slide(Tucked t, Point to, bool toTop, bool syncFirst, Action? done, Func<double, double> ease)
     {
         var h = t.Hwnd;
         var from = t.Anim?.Current ?? Win.Frame(h)?.Location ?? to;
-        var ms = t.Plan.Floating ? 0 : S.AnimationMs; // a floating tab's window jumps from another edge: no slide
+        // A floating tab's window jumps from another edge; "Show animations in Windows" off means no slides at all
+        var ms = t.Plan.Floating || !System.Windows.SystemParameters.ClientAreaAnimation ? 0 : S.AnimationMs;
         var hung = Win.IsHung(h);
         if (ms <= 0 || hung || from == to)
         {
@@ -545,25 +545,38 @@ public static class TuckManager
             if (ok) done?.Invoke();
             return ok;
         }
-        var a = new Anim(from, to, ms, toTop, done);
+        var a = new Anim(from, to, ms, toTop, done, ease);
         t.Anim = a;
         var (p, _) = a.Step();
         var first = Win.MoveFrame(h, p, async: !syncFirst, a.ToTop);
-        a.ToTop = false;
+        (a.Sent, a.SentAt, a.ToTop) = (p, System.Diagnostics.Stopwatch.GetTimestamp(), false);
         if (!first) { t.Anim = null; return false; }
-        if (!AnimTimer.IsEnabled) AnimTimer.Start();
+        if (!animating)
+        {
+            animating = true;
+            System.Windows.Media.CompositionTarget.Rendering += AnimTick;
+        }
         return true;
     }
 
-    static void AnimTick()
+    /// <summary>
+    /// One frame per display refresh. A window that has not caught up with the last frame gets no new one for up to 50 ms
+    /// (async moves would pile up in its queue and arrive in a burst); the last frame always goes.
+    /// </summary>
+    static void AnimTick(object? sender, EventArgs e)
     {
         var any = false;
         foreach (var t in Windows.ToList())
         {
             if (t.Anim is not { } a) continue;
             var (p, finished) = a.Step();
-            Win.MoveFrame(t.Hwnd, p, async: true, a.ToTop);
-            a.ToTop = false;
+            var lagging = !finished && Win.Frame(t.Hwnd) is { } f && f.Location != a.Sent
+                && System.Diagnostics.Stopwatch.GetElapsedTime(a.SentAt).TotalMilliseconds < 50;
+            if (!lagging && p != a.Sent)
+            {
+                Win.MoveFrame(t.Hwnd, p, async: true, a.ToTop);
+                (a.Sent, a.SentAt, a.ToTop) = (p, System.Diagnostics.Stopwatch.GetTimestamp(), false);
+            }
             if (finished)
             {
                 if (t.Anim == a) t.Anim = null;
@@ -571,7 +584,11 @@ public static class TuckManager
             }
             else any = true;
         }
-        if (!any) AnimTimer.Stop();
+        if (!any && animating)
+        {
+            animating = false;
+            System.Windows.Media.CompositionTarget.Rendering -= AnimTick;
+        }
     }
 
     /// <summary>Every 33 ms while a window is out: a click inside pins it; gone mouse for the slide-in delay slides it in.</summary>
@@ -621,9 +638,27 @@ public static class TuckManager
             for (var i = 0; i < list.Count; i++)
             {
                 list[i].Tab!.IconSource = S.TabIcon ? list[i].Icon : null;
+                list[i].Tab!.Color = ColorFor(list[i]);
                 list[i].Tab!.Place(rects[i]);
             }
         }
+    }
+
+    /// <summary>
+    /// v1.1: the window's own color, else its rule's, else Settings: the icon's dominant color (readable on the theme; a colorless
+    /// icon gets the accent), the Windows accent, or the custom color. Null = the accent.
+    /// </summary>
+    static System.Windows.Media.Color? ColorFor(Tucked t)
+    {
+        if (TabColors.Parse(t.TabColor) is { } own) return own;
+        if (TabColors.Parse(S.Rules.FirstOrDefault(r => r.TabColor is not null && r.Exe.Equals(t.Program, StringComparison.OrdinalIgnoreCase))?.TabColor) is { } ruled)
+            return ruled;
+        return S.TabColorMode switch
+        {
+            "accent" => null,
+            "custom" => TabColors.Parse(S.TabColor),
+            _ => TabColors.OfIcon(t.Icon, Theme.IsDark),
+        };
     }
 
     /// <summary>Thin tab from the settings, or (v1.0) a wider one with the program's icon.</summary>
@@ -871,6 +906,8 @@ public static class TuckManager
         if (shellHookMessage != 0 && msg == shellHookMessage && (int)wParam == HshellFlash && ByHwnd.TryGetValue(lParam, out var flashing)
             && flashing.State == TuckState.Parked && flashing.Tab is { } tab)
             tab.Flash = true;
+        if (msg == MessageWindow.WM_SETTINGCHANGE && Windows.Count > 0)
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(RelayoutTabs); // light or dark: icon colors are made readable again
         if (msg == MessageWindow.WM_DISPLAYCHANGE
             || (msg == MessageWindow.WM_SETTINGCHANGE && wParam == SpiSetWorkArea)
             || (msg == MessageWindow.WM_POWERBROADCAST && wParam == PbtResumeAutomatic))
