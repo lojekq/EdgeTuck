@@ -61,12 +61,16 @@ public static class TrayMenu
         menu.Items.Add(new Separator());
         menu.Items.Add(Tray.Item(Loc.T("Tray.Exit"), () => { }));
         Rebuild(menu);
-        // A ContextMenu may have no parent: render it on its own
+        // A ContextMenu may have no parent: lay it out on its own, then draw everything it paints (shadow and margins too)
         menu.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         menu.Arrange(new Rect(menu.DesiredSize));
         menu.UpdateLayout();
-        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(menu.ActualWidth * 2), (int)Math.Ceiling(menu.ActualHeight * 2), 192, 192, System.Windows.Media.PixelFormats.Pbgra32);
-        bmp.Render(menu);
+        var bounds = System.Windows.Media.VisualTreeHelper.GetDescendantBounds(menu);
+        var visual = new System.Windows.Media.DrawingVisual();
+        using (var dc = visual.RenderOpen())
+            dc.DrawRectangle(new System.Windows.Media.VisualBrush(menu), null, new Rect(bounds.Size));
+        var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(bounds.Width * 2), (int)Math.Ceiling(bounds.Height * 2), 192, 192, System.Windows.Media.PixelFormats.Pbgra32);
+        bmp.Render(visual);
         var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
         png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path))!);

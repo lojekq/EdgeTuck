@@ -44,9 +44,9 @@ public static class SettingsSection
             Content = grid, Margin = new Thickness(0, 0, 0, 4),
         });
 
-        panel.Children.Add(Card("Settings.SlideOut", SymbolRegular.ArrowRight24, Number(S.SlideOutDelayMs, 0, 2000, v => S.SlideOutDelayMs = v, "ms")));
-        panel.Children.Add(Card("Settings.SlideIn", SymbolRegular.ArrowLeft24, Number(S.SlideInDelayMs, 0, 5000, v => S.SlideInDelayMs = v, "ms")));
-        panel.Children.Add(Card("Settings.Animation", SymbolRegular.Flash24, Number(S.AnimationMs, 0, 1000, v => S.AnimationMs = v, "ms"), "Settings.Animation.Note"));
+        panel.Children.Add(Card("Settings.SlideOut", SymbolRegular.ArrowRight24, Number(S.SlideOutDelayMs, 0, 2000, v => S.SlideOutDelayMs = v, Loc.T("Unit.Ms"))));
+        panel.Children.Add(Card("Settings.SlideIn", SymbolRegular.ArrowLeft24, Number(S.SlideInDelayMs, 0, 5000, v => S.SlideInDelayMs = v, Loc.T("Unit.Ms"))));
+        panel.Children.Add(Card("Settings.Animation", SymbolRegular.Flash24, Number(S.AnimationMs, 0, 1000, v => S.AnimationMs = v, Loc.T("Unit.Ms")), "Settings.Animation.Note"));
         var tab = new StackPanel { Orientation = Orientation.Horizontal };
         tab.Children.Add(Number(S.TabThickness, 2, 32, v => S.TabThickness = v, "×"));
         tab.Children.Add(new FrameworkElement { Width = 8 });

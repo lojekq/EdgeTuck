@@ -47,7 +47,7 @@ public static class Autoplay
 
         if (hero || closeup)
         {
-            Win.MoveFrame(mh, new Point(3020, 1700), async: false);
+            Win.MoveFrame(mh, new Point(3020, 1520), async: false); // at the seam: its tab is in the closeup area
             TuckManager.DemoDragEnd(mh, DemoData.Info(DemoData.Music));
             After(400, () =>
             {

@@ -91,7 +91,10 @@ public static class DemoData
         var brush = new SolidColorBrush(Color.FromRgb((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb));
         var text = new FormattedText(glyph, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
             new Typeface(DemoWindow.Icons, System.Windows.FontStyles.Normal, System.Windows.FontWeights.Normal, System.Windows.FontStretches.Normal), 24, brush, 1.0);
-        var image = new DrawingImage(new GeometryDrawing(brush, null, text.BuildGeometry(new System.Windows.Point(0, 0))));
+        // A square box around the glyph: ImageIcon fills its square and would crop a tall image
+        var side = Math.Max(text.Width, text.Height);
+        var box = new GeometryDrawing(System.Windows.Media.Brushes.Transparent, null, new RectangleGeometry(new System.Windows.Rect(0, 0, side, side)));
+        var image = new DrawingImage(new DrawingGroup { Children = { box, new GeometryDrawing(brush, null, text.BuildGeometry(new System.Windows.Point((side - text.Width) / 2, (side - text.Height) / 2))) } });
         image.Freeze();
         return image;
     }

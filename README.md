@@ -35,7 +35,7 @@ Edge Tuck slides such a window behind the screen edge and leaves a thin tab ther
 
 ## See it in action
 
-<img src="docs/tabs-closeup-light.png" width="320" alt="A tab on the left edge of a portrait monitor, lit under the mouse">
+<img src="docs/tabs-closeup-light.png" width="240" alt="A tab on the left edge of a portrait monitor, lit under the mouse"> <img src="docs/tray-dark-en.png" width="270" alt="The tray menu with the tucked windows">
 
 ## Screenshots
 
