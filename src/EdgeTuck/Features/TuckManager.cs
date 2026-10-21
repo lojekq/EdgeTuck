@@ -774,7 +774,8 @@ public static class TuckManager
     static void CheckFullscreen()
     {
         if (Windows.Count == 0) { FullscreenTimer.Stop(); return; }
-        foreach (var t in Windows) if (t.Tab is { } tab) VirtualDesktops.Follow(tab.Handle, t.Hwnd); // v1.0: the tab stays on its window's desktop
+        // v1.0: the tab stays on its window's desktop. A snapshot: a COM call pumps messages, and a window may close meanwhile
+        foreach (var t in Windows.ToList()) if (ByHwnd.ContainsKey(t.Hwnd) && t.Tab is { } tab) VirtualDesktops.Follow(tab.Handle, t.Hwnd);
         string? device = null;
         var fg = Win.Foreground;
         if (S.HideTabsInFullscreen && fg != 0 && !ByHwnd.ContainsKey(fg) && TopWindows.Pid(fg) != Environment.ProcessId
