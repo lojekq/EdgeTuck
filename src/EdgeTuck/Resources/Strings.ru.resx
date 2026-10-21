@@ -89,7 +89,7 @@
   <data name="Toast.Hung" xml:space="preserve"><value>Окно не отвечает.</value></data>
   <data name="Toast.Fights" xml:space="preserve"><value>Окно само двигается обратно, поэтому оно возвращено на экран.</value></data>
   <data name="Toast.MonitorsChanged" xml:space="preserve"><value>Мониторы изменились: окна возвращены на экран: {0}.</value></data>
-  <data name="Toast.FirstRule" xml:space="preserve"><value>Правила работают, пока запущен Edge Tuck. Включите автозапуск в настройках.</value></data>
+  <data name="Toast.FirstRule" xml:space="preserve"><value>Правила работают, пока запущен Edge Tuck. Включите «Запускать вместе с Windows» в настройках.</value></data>
   <data name="Tray.RestoreAll" xml:space="preserve"><value>Вернуть все окна</value></data>
   <data name="Tray.Pause" xml:space="preserve"><value>Пауза</value></data>
   <data name="Tab.Return" xml:space="preserve"><value>Вернуть окно</value></data>
