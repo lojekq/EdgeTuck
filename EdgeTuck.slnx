@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EdgeTuck/EdgeTuck.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EdgeTuck.Tests/EdgeTuck.Tests.csproj" />
+  </Folder>
+</Solution>
