@@ -28,9 +28,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         var a = Args.Current;
-        Crash.Install(this);
-        Settings.Load();
-        Loc.Apply(Settings.Current.Language);
+        Crash.Install(this); // Settings and Loc are already loaded in Program.Main
         // Uninstall and "Remove data": every tucked window back on screen first. A running copy has already returned its own
         // through Exit (update and uninstall close it via the exit channel); this also catches a journal left by a crash.
         RemoveData = () => { TuckManager.ReturnEverything(); return null; };
