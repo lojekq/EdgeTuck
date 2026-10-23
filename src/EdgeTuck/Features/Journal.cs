@@ -39,8 +39,9 @@ public sealed class JournalFile
 }
 
 /// <summary>
-/// %APPDATA%\EdgeTuck\tucked.json, written before every first move (write-ahead) and after every return.
-/// Read by the next start and by the guard process; under --demo nothing is written.
+/// AppInfo.DataDir\tucked.json, written before every first move (write-ahead) and after every return.
+/// Read by the next start and by the guard process; under --demo nothing is written. A dev instance (Debug, --data-dir) has its own,
+/// and its guard (the same exe, the same environment) never returns the installed copy's windows.
 /// </summary>
 public static class Journal
 {

@@ -65,6 +65,16 @@ public class JournalRulesTests
     }
 
     [TestMethod]
+    public void DevJournalIsNotTheInstalledCopys()
+    {
+        // the guard is this exe with the same environment: a dev instance's guard reads and returns only the dev journal
+        var real = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppInfo.Name);
+        Assert.IsTrue(AppInfo.IsDev);
+        Assert.AreEqual(Path.Combine(AppInfo.DataDir, "tucked.json"), Journal.FilePath);
+        Assert.IsFalse(Journal.FilePath.StartsWith(real + @"\", StringComparison.OrdinalIgnoreCase), Journal.FilePath);
+    }
+
+    [TestMethod]
     public void NullSectionsInSettingsMeanEmpty()
     {
         var path = Path.Combine(Path.GetTempPath(), $"edgetuck-settings-{Guid.NewGuid():N}.json");
