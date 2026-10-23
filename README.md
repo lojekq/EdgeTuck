@@ -31,7 +31,7 @@ Edge Tuck slides such a window behind the screen edge and leaves a thin tab ther
 - **Rules** — scrcpy, a chat, music or a terminal tuck themselves to their edge when they open; a title filter, a minimum size and a key to show or hide the window (quake mode for any program).
 - **Out of the way in games** — tabs disappear while a fullscreen app is in front.
 - **Never loses a window** — a journal written before every move and a guard process bring everything back, even after a crash.
-- **Tabs that talk** — a tab lights up when its window wants attention; drag a file onto it and the window comes out; drag the tab along the edge, show the program's icon on it.
+- **Tabs that talk** — colored like the program's icon (or your color), a tab lights up when its window wants attention; drag a file onto it and the window comes out; drag the tab along the edge.
 - **Multi-monitor aware** — down to the free part of an edge (a portrait monitor next to an ultrawide), a click tab even on the edge between two monitors, mixed DPI, virtual desktops. No admin, no telemetry, everything local.
 
 ## See it in action
@@ -86,13 +86,14 @@ Try it: click a window and press `Ctrl+Win+Alt+←`, then point at the tab on th
 | Return all windows | `Ctrl+Win+Alt+Home` | Emergency: every tucked window back on screen (also in the tray menu) |
 | Slide out after hovering the tab | 200 ms | |
 | Slide back after the mouse leaves | 400 ms | |
-| Slide animation | 150 ms | 0 = instant |
+| Slide animation | 150 ms | 0 = instant; none while Windows' "Show animations" is off |
 | Tab size | 6 × 64 DIP | Grows with the monitor's scale |
 | Drag past the edge to tuck | on, 50 % | Left, right and bottom edges; this much of the window must be behind the edge |
 | Hide tabs while a fullscreen app is in front | on | Games and fullscreen video |
 | Slide out when the mouse rests on a tab | on | Off: tabs open by click only |
 | Tabs on edges shared with another monitor | on, open by click | The window waits behind an outer edge and appears at once |
 | Tab with the program's icon | off | A wider tab with the icon |
+| Tab color | from the program's icon | Made readable on the light or dark theme (a colorless icon gets the accent); or the Windows accent, or your color (palette or HEX). A rule or a single window (Windows page) can have its own |
 | Rules | none | "Always tuck this program here", from a tab's menu or a template (scrcpy, Discord, Spotify, Windows Terminal); title filter, minimum size, own key |
 | Language, theme | Windows | English or Russian, light or dark |
 | Start with Windows | on after install | Rules work while Edge Tuck runs |

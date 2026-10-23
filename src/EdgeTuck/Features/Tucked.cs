@@ -48,7 +48,10 @@ public sealed class Tucked : INotifyPropertyChanged
         set { tabColor = value; Changed(); Changed(nameof(TabBrush)); }
     }
 
-    public System.Windows.Media.Brush? TabBrush => TabColors.Parse(TabColor) is { } c ? new System.Windows.Media.SolidColorBrush(c) : null;
+    /// <summary>The color the tab has now (own, rule's or Settings'); null = the accent.</summary>
+    public System.Windows.Media.Brush? TabBrush => TuckManager.ColorFor(this) is { } c ? new System.Windows.Media.SolidColorBrush(c) : null;
+
+    public void ColorMayChange() => Changed(nameof(TabBrush));
 
     public string Title
     {

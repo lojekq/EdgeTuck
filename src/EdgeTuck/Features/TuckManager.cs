@@ -629,6 +629,7 @@ public static class TuckManager
     static void RelayoutTabs()
     {
         var size = TabSize();
+        foreach (var t in Windows) t.ColorMayChange();
         foreach (var g in Windows.Where(t => t.Tab is not null).GroupBy(t => (t.Plan.Monitor.Device, t.Plan.Edge, t.Plan.Segment)))
         {
             var list = g.ToList();
@@ -648,7 +649,7 @@ public static class TuckManager
     /// v1.1: the window's own color, else its rule's, else Settings: the icon's dominant color (readable on the theme; a colorless
     /// icon gets the accent), the Windows accent, or the custom color. Null = the accent.
     /// </summary>
-    static System.Windows.Media.Color? ColorFor(Tucked t)
+    internal static System.Windows.Media.Color? ColorFor(Tucked t)
     {
         if (TabColors.Parse(t.TabColor) is { } own) return own;
         if (TabColors.Parse(S.Rules.FirstOrDefault(r => r.TabColor is not null && r.Exe.Equals(t.Program, StringComparison.OrdinalIgnoreCase))?.TabColor) is { } ruled)
