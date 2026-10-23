@@ -74,6 +74,8 @@ Open the folder?</value></data>
   <data name="Settings.Animation" xml:space="preserve"><value>Slide animation</value></data>
   <data name="Settings.Animation.Note" xml:space="preserve"><value>0 = instant</value></data>
   <data name="Settings.Tab" xml:space="preserve"><value>Tab size</value></data>
+  <data name="Settings.Tab.Note" xml:space="preserve"><value>In pixels, for every tab at once; a window (Windows page) or a rule can have its own size</value></data>
+  <data name="Tab.Size.Hint" xml:space="preserve"><value>Empty = as in Settings</value></data>
   <data name="Settings.Gesture" xml:space="preserve"><value>Drag past the edge to tuck</value></data>
   <data name="Settings.Gesture.Note" xml:space="preserve"><value>Left, right and bottom edges; this much of the window must be behind the edge</value></data>
   <data name="Settings.Fullscreen" xml:space="preserve"><value>Hide tabs while a fullscreen app is in front</value></data>

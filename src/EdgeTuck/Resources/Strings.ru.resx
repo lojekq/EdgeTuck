@@ -74,6 +74,8 @@
   <data name="Settings.Animation" xml:space="preserve"><value>Анимация</value></data>
   <data name="Settings.Animation.Note" xml:space="preserve"><value>0 = мгновенно</value></data>
   <data name="Settings.Tab" xml:space="preserve"><value>Размер язычка</value></data>
+  <data name="Settings.Tab.Note" xml:space="preserve"><value>В пикселях, сразу для всех язычков; у окна (страница «Окна») или правила может быть свой размер</value></data>
+  <data name="Tab.Size.Hint" xml:space="preserve"><value>Пусто — как в настройках</value></data>
   <data name="Settings.Gesture" xml:space="preserve"><value>Прятать, если утащить окно за край</value></data>
   <data name="Settings.Gesture.Note" xml:space="preserve"><value>Левый, правый и нижний края; такая часть окна должна оказаться за краем</value></data>
   <data name="Settings.Fullscreen" xml:space="preserve"><value>Скрывать язычки при полноэкранных окнах</value></data>

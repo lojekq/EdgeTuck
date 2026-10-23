@@ -28,6 +28,13 @@ public partial class WindowsPage
     void OnReturn(object sender, RoutedEventArgs e) => TuckManager.Untuck(Of(sender), move: true);
     void OnRemember(object sender, RoutedEventArgs e) => TuckManager.AddRule(Of(sender));
 
+    /// <summary>v1.1.1: this window's own tab size.</summary>
+    void OnSize(object sender, RoutedEventArgs e)
+    {
+        var t = Of(sender);
+        SettingsSection.OpenTabSize((FrameworkElement)sender, t.TabThickness, t.TabLength, (a, b) => { t.TabThickness = a; t.TabLength = b; TuckManager.RefreshTabs(); });
+    }
+
     /// <summary>v1.1: this window's own tab color.</summary>
     void OnColor(object sender, RoutedEventArgs e)
     {

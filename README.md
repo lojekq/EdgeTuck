@@ -87,7 +87,7 @@ Try it: click a window and press `Ctrl+Win+Alt+←`, then point at the tab on th
 | Slide out after hovering the tab | 200 ms | |
 | Slide back after the mouse leaves | 400 ms | |
 | Slide animation | 150 ms | 0 = instant; none while Windows' "Show animations" is off |
-| Tab size | 6 × 64 DIP | Grows with the monitor's scale |
+| Tab size | 6 × 64 px | Thickness 2–48, length 16–600 px, applied to every tab at once. A rule or a single window (Windows page) can have its own; a tab with the icon is at least 24 × 48 DIP |
 | Drag past the edge to tuck | on, 50 % | Left, right and bottom edges; this much of the window must be behind the edge |
 | Hide tabs while a fullscreen app is in front | on | Games and fullscreen video |
 | Slide out when the mouse rests on a tab | on | Off: tabs open by click only |

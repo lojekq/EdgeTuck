@@ -81,6 +81,34 @@ public class JournalRulesTests
     }
 
     [TestMethod]
+    public void TabSizeIsSavedAndComesFromWindowRuleOrSettings()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"edgetuck-settings-{Guid.NewGuid():N}.json");
+        try
+        {
+            var s = new Settings();
+            s.EdgeTuck.TabThickness = 10;
+            s.EdgeTuck.TabLength = 120;
+            s.EdgeTuck.Rules = [new() { Exe = "Spotify.exe", TabThickness = 16 }, new() { Exe = "Discord.exe" }];
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(s, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)));
+            var e = Settings.Load(path).EdgeTuck;
+            Assert.AreEqual((10, 120), (e.TabThickness, e.TabLength));
+            Assert.AreEqual(16, e.Rules[0].TabThickness);
+            Assert.IsNull(e.Rules[0].TabLength, "empty = as in Settings");
+            Assert.IsNull(e.Rules[1].TabThickness);
+
+            Assert.AreEqual(new Geometry.TabPx(10, 120), Rules.TabSize(e, "Discord.exe", null, null, 96), "Settings");
+            Assert.AreEqual(new Geometry.TabPx(16, 120), Rules.TabSize(e, "SPOTIFY.EXE", null, null, 96), "the rule's thickness, Settings' length");
+            Assert.AreEqual(new Geometry.TabPx(4, 300), Rules.TabSize(e, "Spotify.exe", 4, 300, 96), "the window's own size wins");
+            Assert.AreEqual(new Geometry.TabPx(16, 300), Rules.TabSize(e, "Spotify.exe", null, 300, 96), "each side on its own");
+
+            File.WriteAllText(path, """{ "schema": 1, "edgeTuck": { "tabThickness": 6, "rules": [ { "exe": "a.exe", "tabColor": "#E81123" } ] } }""");
+            Assert.IsNull(Settings.Load(path).EdgeTuck.Rules[0].TabLength, "a 1.1.0 rule has no size of its own");
+        }
+        finally { foreach (var p in Directory.GetFiles(Path.GetTempPath(), Path.GetFileNameWithoutExtension(path) + "*")) File.Delete(p); }
+    }
+
+    [TestMethod]
     public void RulesMatchByExe()
     {
         Rule[] rules = [new() { Exe = "Discord.exe", Enabled = false }, new() { Exe = "scrcpy.exe", Edge = Edge.Right }];

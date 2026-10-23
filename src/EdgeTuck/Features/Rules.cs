@@ -56,5 +56,15 @@ public static class Rules
         Along = Math.Round(Geometry.AlongFraction(p.Monitor, p.Edge, Center(Geometry.Along(p.Shown, p.Edge))), 3),
     };
 
+    /// <summary>
+    /// v1.1.1: a tab's size in px: the window's own, else that of the first rule of its program that sets one, else Settings;
+    /// each side on its own (an empty thickness with a set length takes the thickness from further down).
+    /// </summary>
+    public static Geometry.TabPx TabSize(EdgeTuckSettings s, string program, int? ownThickness, int? ownLength, int dpi)
+    {
+        var rule = s.Rules.FirstOrDefault(r => (r.TabThickness ?? r.TabLength) is not null && r.Exe.Equals(program, StringComparison.OrdinalIgnoreCase));
+        return Geometry.TabSize(ownThickness ?? rule?.TabThickness ?? s.TabThickness, ownLength ?? rule?.TabLength ?? s.TabLength, s.TabIcon, dpi);
+    }
+
     static int Center(Segment s) => s.Start + s.Length / 2;
 }

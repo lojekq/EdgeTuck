@@ -239,35 +239,60 @@ public static class Geometry
     /// <summary>DIP → physical px on a monitor (6 DIP at 125 % = 8 px).</summary>
     public static int Px(int dip, int dpi) => (int)Math.Round(dip * dpi / 96.0, MidpointRounding.AwayFromZero);
 
-    /// <summary>Tab size in DIP: thickness across the edge, length along it; spacing between tabs and from segment ends.</summary>
-    public sealed record TabSize(int Thickness = 6, int Length = 64, int EndMargin = 64, int Gap = 8);
+    /// <summary>One tab in physical px: thickness across the edge, length along it.</summary>
+    public readonly record struct TabPx(int Thickness, int Length);
+
+    public const int MinTabThickness = 2, MaxTabThickness = 48, MinTabLength = 16, MaxTabLength = 600;
+    const int TabEndMarginDip = 64, TabGapDip = 8;
+
+    /// <summary>
+    /// v1.1.1: the size the user set, in px as it is (not scaled by the monitor's DPI), within the limits;
+    /// a tab with the program's icon is at least 24×48 DIP so the icon fits.
+    /// </summary>
+    public static TabPx TabSize(int thickness, int length, bool icon, int dpi)
+    {
+        int t = Math.Clamp(thickness, MinTabThickness, MaxTabThickness), l = Math.Clamp(length, MinTabLength, MaxTabLength);
+        return icon ? new(Math.Max(t, Px(24, dpi)), Math.Max(l, Px(48, dpi))) : new(t, l);
+    }
 
     /// <summary>
     /// Tabs on one segment of one edge, in px of m: at the work-area edge (above a taskbar), as near the wanted centers as they can be,
-    /// not overlapping, no closer than EndMargin to the segment ends. Same order as wanted.
+    /// not overlapping, no closer than 64 DIP to the segment ends. Each tab has its own size. Same order as given.
     /// </summary>
-    public static Rectangle[] Tabs(Display m, Edge e, Segment segment, IReadOnlyList<int> wantedCenters, TabSize size)
+    public static Rectangle[] Tabs(Display m, Edge e, Segment segment, IReadOnlyList<(int Center, TabPx Size)> tabs)
     {
-        int t = Px(size.Thickness, m.Dpi), len = Px(size.Length, m.Dpi), gap = Px(size.Gap, m.Dpi), end = Px(size.EndMargin, m.Dpi);
-        int lo = segment.Start + end, hi = segment.End - end - len;
-        if (hi < lo) lo = hi = segment.Start + (segment.Length - len) / 2; // segment too short for the margins: center it
+        int gap = Px(TabGapDip, m.Dpi), end = Px(TabEndMarginDip, m.Dpi);
+        bool TooShort(int len) => segment.End - end - len < segment.Start + end; // for the margins: center it
+        int Lo(int len) => TooShort(len) ? segment.Start + (segment.Length - len) / 2 : segment.Start + end;
+        int Hi(int len) => TooShort(len) ? Lo(len) : segment.End - end - len;
 
-        var order = Enumerable.Range(0, wantedCenters.Count).OrderBy(i => wantedCenters[i]).ToArray();
-        var starts = new int[wantedCenters.Count];
-        var prev = int.MinValue;
+        var order = Enumerable.Range(0, tabs.Count).OrderBy(i => tabs[i].Center).ToArray();
+        var starts = new int[tabs.Count];
+        int? prevEnd = null;
         foreach (var i in order) // forward: no overlap, not before lo
-            prev = starts[i] = Math.Max(Math.Max(wantedCenters[i] - len / 2, lo), prev == int.MinValue ? lo : prev + len + gap);
-        var next = int.MaxValue;
+        {
+            var len = tabs[i].Size.Length;
+            starts[i] = Math.Max(Math.Max(tabs[i].Center - len / 2, Lo(len)), prevEnd + gap ?? int.MinValue);
+            prevEnd = starts[i] + len;
+        }
+        int? nextStart = null;
         foreach (var i in order.Reverse()) // backward: not after hi
-            next = starts[i] = Math.Min(starts[i], next == int.MaxValue ? hi : next - len - gap);
+        {
+            var len = tabs[i].Size.Length;
+            nextStart = starts[i] = Math.Min(starts[i], Math.Min(Hi(len), nextStart - gap - len ?? int.MaxValue));
+        }
 
         var w = m.Work;
-        return starts.Select(s => e switch
+        return Enumerable.Range(0, tabs.Count).Select(i =>
         {
-            Edge.Left => new Rectangle(w.Left, s, t, len),
-            Edge.Right => new Rectangle(w.Right - t, s, t, len),
-            Edge.Top => new Rectangle(s, w.Top, len, t),
-            _ => new Rectangle(s, w.Bottom - t, len, t),
+            var (s, (t, len)) = (starts[i], tabs[i].Size);
+            return e switch
+            {
+                Edge.Left => new Rectangle(w.Left, s, t, len),
+                Edge.Right => new Rectangle(w.Right - t, s, t, len),
+                Edge.Top => new Rectangle(s, w.Top, len, t),
+                _ => new Rectangle(s, w.Bottom - t, len, t),
+            };
         }).ToArray();
     }
 

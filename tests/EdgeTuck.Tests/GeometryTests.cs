@@ -7,6 +7,8 @@ namespace EdgeTuck.Tests;
 [TestClass]
 public class GeometryTests
 {
+    static (int, Geometry.TabPx)[] At(params int[] centers) => centers.Select(c => (c, new Geometry.TabPx(6, 64))).ToArray();
+
     static string Free(Display[] layout, int monitor, Edge e, int windowAcross = 500) =>
         string.Join(", ", Geometry.FreeSegments(layout, layout[monitor], e, Geometry.ParkGap + windowAcross) is { Count: > 0 } s
             ? s.Select(x => $"{x.Start}–{x.End}") : ["—"]);
@@ -83,7 +85,7 @@ public class GeometryTests
                                 Assert.IsTrue(Geometry.Distance(p.Parked, n.Bounds) >= Geometry.Margin, $"{what}: parked {p.Parked} too near {n.Device}");
                             var along = Geometry.Along(p.Shown, e);
                             Assert.IsTrue(along.Start >= p.Segment.Start && along.End <= p.Segment.End, $"{what}: shown outside its segment");
-                            var tab = Geometry.Tabs(m, e, p.Segment, [along.Start + along.Length / 2], new())[0];
+                            var tab = Geometry.Tabs(m, e, p.Segment, At(along.Start + along.Length / 2))[0];
                             var tabAlong = Geometry.Along(tab, e);
                             Assert.IsTrue(tabAlong.Start >= p.Segment.Start && tabAlong.End <= p.Segment.End, $"{what}: tab {tab} outside {p.Segment}");
                             Assert.IsTrue(w.Contains(tab), $"{what}: tab {tab} outside work");
@@ -184,32 +186,53 @@ public class GeometryTests
     }
 
     [TestMethod]
+    public void TabSizeIsPxAndEachTabHasItsOwn()
+    {
+        var d2 = Layouts.Owner125[1]; // 125 %
+        Assert.AreEqual(new Geometry.TabPx(6, 64), Geometry.TabSize(6, 64, icon: false, d2.Dpi), "px as set, not scaled by DPI");
+        Assert.AreEqual(new Geometry.TabPx(Geometry.MinTabThickness, Geometry.MaxTabLength), Geometry.TabSize(0, 5000, icon: false, 96), "within limits");
+        Assert.AreEqual(new Geometry.TabPx(30, 64), Geometry.TabSize(6, 64, icon: true, d2.Dpi), "the icon fits: 24 DIP at 125 %");
+        Assert.AreEqual(new Geometry.TabPx(40, 200), Geometry.TabSize(40, 200, icon: true, 96));
+
+        // a big tab next to a small one: no overlap, each its own size, both on the edge
+        var m = Layouts.Single[0];
+        var tabs = Geometry.Tabs(m, Edge.Right, new Segment(0, 1080), [(500, new(6, 64)), (520, new(20, 200))]);
+        Assert.AreEqual(new Size(6, 64), tabs[0].Size);
+        Assert.AreEqual(new Size(20, 200), tabs[1].Size);
+        Assert.AreEqual(m.Work.Right, tabs[0].Right);
+        Assert.AreEqual(m.Work.Right, tabs[1].Right);
+        Assert.IsTrue(tabs[1].Top >= tabs[0].Bottom + 8, $"{tabs[0]} and {tabs[1]}");
+        var low = Geometry.Tabs(m, Edge.Bottom, new Segment(0, 1920), [(1900, new(12, 300))])[0];
+        Assert.AreEqual(Rectangle.FromLTRB(1920 - 64 - 300, m.Work.Bottom - 12, 1920 - 64, m.Work.Bottom), low, "kept off the segment end");
+    }
+
+    [TestMethod]
     public void TabsDoNotOverlapAndKeepOffTheEnds()
     {
         var m = Layouts.Single[0];
         var seg = new Segment(0, 1080);
-        var tabs = Geometry.Tabs(m, Edge.Left, seg, [500, 510, 520], new());
+        var tabs = Geometry.Tabs(m, Edge.Left, seg, At(500, 510, 520));
         for (var i = 0; i < tabs.Length; i++)
         {
             Assert.AreEqual(new Size(6, 64), tabs[i].Size);
             Assert.IsTrue(tabs[i].Top >= 64 && tabs[i].Bottom <= 1080 - 64);
             for (var j = i + 1; j < tabs.Length; j++) Assert.IsFalse(tabs[i].IntersectsWith(tabs[j]), $"{tabs[i]} and {tabs[j]}");
         }
-        Assert.AreEqual(64, Geometry.Tabs(m, Edge.Left, seg, [0], new())[0].Top);
-        Assert.AreEqual(1080 - 64 - 64, Geometry.Tabs(m, Edge.Left, seg, [5000], new())[0].Top);
+        Assert.AreEqual(64, Geometry.Tabs(m, Edge.Left, seg, At(0))[0].Top);
+        Assert.AreEqual(1080 - 64 - 64, Geometry.Tabs(m, Edge.Left, seg, At(5000))[0].Top);
 
-        // owner, DISPLAY2 at 125 %: 8×80 px, 80 px from the segment ends (left edge below the seam: y ≥ 1600)
+        // owner, DISPLAY2 at 125 %: 6×64 px as set (px since 1.1.1), 80 px (64 DIP) from the segment ends (left edge below the seam: y ≥ 1600)
         var d2 = Layouts.Owner125[1];
-        var t = Geometry.Tabs(d2, Edge.Left, new Segment(1520, 2560), [1500], new())[0];
-        Assert.AreEqual(Rectangle.FromLTRB(3440, 1600, 3448, 1680), t);
-        Assert.AreEqual(new Size(6, 64), Geometry.Tabs(Layouts.Display1, Edge.Left, new Segment(0, 1408), [700], new())[0].Size);
-        Assert.AreEqual(1584, Geometry.Tabs(Layouts.Display2, Edge.Left, new Segment(1520, 2560), [1500], new())[0].Top, "plan 04 §7: y ≥ 1584");
+        var t = Geometry.Tabs(d2, Edge.Left, new Segment(1520, 2560), At(1500))[0];
+        Assert.AreEqual(Rectangle.FromLTRB(3440, 1600, 3446, 1664), t);
+        Assert.AreEqual(new Size(6, 64), Geometry.Tabs(Layouts.Display1, Edge.Left, new Segment(0, 1408), At(700))[0].Size);
+        Assert.AreEqual(1584, Geometry.Tabs(Layouts.Display2, Edge.Left, new Segment(1520, 2560), At(1500))[0].Top, "plan 04 §7: y ≥ 1584");
 
         var k4 = Layouts.MixedDpi[0]; // 150 %
-        var big = Geometry.Tabs(k4, Edge.Right, new Segment(1160, 2088), [1500], new())[0];
-        Assert.AreEqual(new Size(9, 96), big.Size);
-        Assert.AreEqual(3840 - 9, big.Left);
-        Assert.AreEqual(1408 - 6, Geometry.Tabs(Layouts.Display1, Edge.Bottom, new Segment(0, 3360), [700], new())[0].Top, "above the taskbar");
+        var px = Geometry.Tabs(k4, Edge.Right, new Segment(1160, 2088), At(1500))[0];
+        Assert.AreEqual(new Size(6, 64), px.Size, "px are not scaled by DPI");
+        Assert.AreEqual(3840 - 6, px.Left);
+        Assert.AreEqual(1408 - 6, Geometry.Tabs(Layouts.Display1, Edge.Bottom, new Segment(0, 3360), At(700))[0].Top, "above the taskbar");
     }
 
     [TestMethod]

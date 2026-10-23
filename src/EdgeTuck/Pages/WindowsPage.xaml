@@ -27,13 +27,14 @@
                             <ui:CardControl.Header>
                                 <StackPanel>
                                     <ui:TextBlock Text="{Binding Title}" FontTypography="BodyStrong" TextTrimming="CharacterEllipsis" />
-                                    <ui:TextBlock Text="{Binding Detail}" FontTypography="Caption" Appearance="Secondary" />
+                                    <ui:TextBlock Text="{Binding Detail}" FontTypography="Caption" Appearance="Secondary" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}" />
                                 </StackPanel>
                             </ui:CardControl.Header>
                             <StackPanel Orientation="Horizontal">
                                 <ui:Button Content="{l:T Windows.Show}" Icon="{ui:SymbolIcon Eye24}" Margin="0,0,8,0" Click="OnShow" />
                                 <ui:Button Content="{l:T Windows.Return}" Icon="{ui:SymbolIcon ArrowExportLtr24}" Margin="0,0,8,0" Click="OnReturn" />
                                 <ui:Button Content="{l:T Windows.Remember}" Icon="{ui:SymbolIcon Pin24}" Margin="0,0,8,0" Click="OnRemember" />
+                                <ui:Button ToolTip="{l:T Settings.Tab}" Icon="{ui:SymbolIcon Resize24}" Click="OnSize" Margin="0,0,8,0" Padding="10,8" />
                                 <ui:Button ToolTip="{l:T Settings.TabColor}" Click="OnColor" Padding="10,8">
                                     <Border Width="16" Height="16" CornerRadius="4" Background="{Binding TabBrush, TargetNullValue={StaticResource SystemAccentBrush}}" />
                                 </ui:Button>

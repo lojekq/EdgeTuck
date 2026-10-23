@@ -628,14 +628,13 @@ public static class TuckManager
     /// <summary>Tabs of each segment of each edge, laid out together (Geometry.Tabs).</summary>
     static void RelayoutTabs()
     {
-        var size = TabSize();
         foreach (var t in Windows) t.ColorMayChange();
         foreach (var g in Windows.Where(t => t.Tab is not null).GroupBy(t => (t.Plan.Monitor.Device, t.Plan.Edge, t.Plan.Segment)))
         {
             var list = g.ToList();
             var first = list[0].Plan;
             var rects = Geometry.Tabs(first.Monitor, first.Edge, first.Segment,
-                list.Select(t => { var a = Geometry.Along(t.Plan.Shown, t.Plan.Edge); return a.Start + a.Length / 2; }).ToList(), size);
+                list.Select(t => { var a = Geometry.Along(t.Plan.Shown, t.Plan.Edge); return (a.Start + a.Length / 2, SizeFor(t)); }).ToList());
             for (var i = 0; i < list.Count; i++)
             {
                 list[i].Tab!.IconSource = S.TabIcon ? list[i].Icon : null;
@@ -662,12 +661,9 @@ public static class TuckManager
         };
     }
 
-    /// <summary>Thin tab from the settings, or (v1.0) a wider one with the program's icon.</summary>
-    static Geometry.TabSize TabSize() => S.TabIcon
-        ? new Geometry.TabSize(24, 48)
-        : new Geometry.TabSize(Math.Clamp(S.TabThickness, 2, 32), Math.Clamp(S.TabLength, 16, 400));
+    static Geometry.TabPx SizeFor(Tucked t) => Rules.TabSize(S, t.Program, t.TabThickness, t.TabLength, t.Plan.Monitor.Dpi);
 
-    /// <summary>Settings changed: tabs take the new size and style.</summary>
+    /// <summary>Settings, a rule or a window changed: tabs take the new size, color and style at once.</summary>
     public static void RefreshTabs() => RelayoutTabs();
 
     /// <summary>v1.0: the tab follows the mouse along its segment while dragged.</summary>
@@ -675,7 +671,7 @@ public static class TuckManager
     {
         if (t.Tab is null || t.State != TuckState.Parked) return;
         t.DragAlong = Geometry.IsVertical(t.Plan.Edge) ? cursor.Y : cursor.X;
-        t.Tab.Place(Geometry.Tabs(t.Plan.Monitor, t.Plan.Edge, t.Plan.Segment, [t.DragAlong.Value], TabSize())[0]);
+        t.Tab.Place(Geometry.Tabs(t.Plan.Monitor, t.Plan.Edge, t.Plan.Segment, [(t.DragAlong.Value, SizeFor(t))])[0]);
     }
 
     /// <summary>v1.0: let go: the window moves along the edge to where the tab is (it may move to another free part).</summary>
@@ -968,6 +964,7 @@ public static class TuckManager
         var rules = S.Rules;
         rules.RemoveAll(r => r.Exe.Equals(t.Program, StringComparison.OrdinalIgnoreCase));
         var rule = Rules.From(t.DemoExe ?? t.Exe, t.Plan);
+        (rule.TabColor, rule.TabThickness, rule.TabLength) = (t.TabColor, t.TabThickness, t.TabLength); // the window's own look goes with it
         var first = rules.Count == 0;
         rules.Add(rule);
         Settings.Save();

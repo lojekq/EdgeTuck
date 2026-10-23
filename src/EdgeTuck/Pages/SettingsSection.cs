@@ -47,11 +47,13 @@ public static class SettingsSection
         panel.Children.Add(Card("Settings.SlideOut", SymbolRegular.ArrowRight24, Number(S.SlideOutDelayMs, 0, 2000, v => S.SlideOutDelayMs = v, Loc.T("Unit.Ms"))));
         panel.Children.Add(Card("Settings.SlideIn", SymbolRegular.ArrowLeft24, Number(S.SlideInDelayMs, 0, 5000, v => S.SlideInDelayMs = v, Loc.T("Unit.Ms"))));
         panel.Children.Add(Card("Settings.Animation", SymbolRegular.Flash24, Number(S.AnimationMs, 0, 1000, v => S.AnimationMs = v, Loc.T("Unit.Ms")), "Settings.Animation.Note"));
-        var tab = new StackPanel { Orientation = Orientation.Horizontal };
-        tab.Children.Add(Number(S.TabThickness, 2, 32, v => S.TabThickness = v, "×"));
-        tab.Children.Add(new FrameworkElement { Width = 8 });
-        tab.Children.Add(Number(S.TabLength, 16, 400, v => S.TabLength = v, "DIP"));
-        panel.Children.Add(Card("Settings.Tab", SymbolRegular.PanelLeft24, tab));
+        var tab = TabSizeBoxes(S.TabThickness, S.TabLength, inherit: false, (t, l) =>
+        {
+            S.TabThickness = t!.Value; S.TabLength = l!.Value;
+            Settings.Save();
+            TuckManager.RefreshTabs();
+        });
+        panel.Children.Add(Card("Settings.Tab", SymbolRegular.PanelLeft24, tab, "Settings.Tab.Note"));
 
         var gesture = new StackPanel { Orientation = Orientation.Horizontal };
         gesture.Children.Add(Number(S.GesturePercent, 10, 90, v => S.GesturePercent = v, "%"));
@@ -101,6 +103,58 @@ public static class SettingsSection
         mode.SelectionChanged += (_, _) => { S.TabColorMode = (string)((ComboBoxItem)mode.SelectedItem).Tag; Apply(); };
         custom.Visibility = S.TabColorMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
         return new StackPanel { HorizontalAlignment = HorizontalAlignment.Right, Children = { mode, custom } };
+    }
+
+    /// <summary>
+    /// v1.1.1: thickness × length in px, applied while typing and with the arrows. inherit: for a window or a rule, where an empty box
+    /// means "as in Settings" (the Settings value is its placeholder); Settings' own boxes ignore an empty box.
+    /// </summary>
+    public static FrameworkElement TabSizeBoxes(int? thickness, int? length, bool inherit, Action<int?, int?> set)
+    {
+        int? t = thickness, l = length;
+        var a = PxBox(t, Geometry.MinTabThickness, Geometry.MaxTabThickness, 1, inherit ? S.TabThickness : null, v => { t = v; set(t, l); });
+        var b = PxBox(l, Geometry.MinTabLength, Geometry.MaxTabLength, 8, inherit ? S.TabLength : null, v => { l = v; set(t, l); });
+        TextBlock Unit(string s) => new() { Text = s, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 6, 0), Appearance = TextColor.Secondary };
+        return new StackPanel { Orientation = Orientation.Horizontal, Children = { a, Unit("×"), b, Unit("px") } };
+    }
+
+    static NumberBox PxBox(int? value, int min, int max, int step, int? placeholder, Action<int?> set)
+    {
+        var box = new NumberBox
+        {
+            Value = value, Minimum = min, Maximum = max, SmallChange = step, LargeChange = step * 8, Width = 130,
+            PlaceholderText = placeholder?.ToString() ?? "", SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline, ClearButtonEnabled = false,
+        };
+        box.TextChanged += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(box.Text)) { if (placeholder is not null && value is not null) set(value = null); }
+            else if (int.TryParse(box.Text, out var v) && v >= min && v <= max && v != value) set(value = v);
+        };
+        return box;
+    }
+
+    /// <summary>v1.1.1: the size boxes in a popup under a button (Windows page).</summary>
+    public static void OpenTabSize(FrameworkElement target, int? thickness, int? length, Action<int?, int?> set)
+    {
+        var border = new Border
+        {
+            Padding = new Thickness(12), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
+            Child = new StackPanel
+            {
+                Children =
+                {
+                    TabSizeBoxes(thickness, length, inherit: true, set),
+                    new TextBlock { Text = Loc.T("Tab.Size.Hint"), FontTypography = FontTypography.Caption, Appearance = TextColor.Secondary, Margin = new Thickness(0, 8, 0, 0) },
+                },
+            },
+        };
+        border.SetResourceReference(Border.BackgroundProperty, "ApplicationBackgroundBrush");
+        border.SetResourceReference(Border.BorderBrushProperty, "ControlStrokeColorDefaultBrush");
+        _ = new System.Windows.Controls.Primitives.Popup
+        {
+            PlacementTarget = target, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom, StaysOpen = false,
+            AllowsTransparency = true, Child = border, IsOpen = true,
+        };
     }
 
     static CardControl Card(string key, SymbolRegular icon, UIElement content, string? noteKey = null)

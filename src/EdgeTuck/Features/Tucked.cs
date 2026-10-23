@@ -48,6 +48,10 @@ public sealed class Tucked : INotifyPropertyChanged
         set { tabColor = value; Changed(); Changed(nameof(TabBrush)); }
     }
 
+    /// <summary>v1.1.1: this window's own tab size in px from the Windows page; null = its rule's or Settings'.</summary>
+    public int? TabThickness { get; set; }
+    public int? TabLength { get; set; }
+
     /// <summary>The color the tab has now (own, rule's or Settings'); null = the accent.</summary>
     public System.Windows.Media.Brush? TabBrush => TuckManager.ColorFor(this) is { } c ? new System.Windows.Media.SolidColorBrush(c) : null;
 

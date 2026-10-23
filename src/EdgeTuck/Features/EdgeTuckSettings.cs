@@ -30,8 +30,8 @@ namespace EdgeTuck.Features
         public int SlideOutDelayMs { get; set; } = 200;
         public int SlideInDelayMs { get; set; } = 400;
         public int AnimationMs { get; set; } = 150;   // 0 = instant
-        public int TabThickness { get; set; } = 6;    // DIP
-        public int TabLength { get; set; } = 64;      // DIP
+        public int TabThickness { get; set; } = 6;    // px (DIP before 1.1.1)
+        public int TabLength { get; set; } = 64;      // px
         public bool Gesture { get; set; } = true;
         public int GesturePercent { get; set; } = 50;
         public bool HideTabsInFullscreen { get; set; } = true;
@@ -72,6 +72,7 @@ namespace EdgeTuck.Features
         bool autoTuck = true, enabled = true;
         string? titleContains, hotkey, tabColor;
         int minWidth, minHeight;
+        int? tabThickness, tabLength;
 
         public string Exe { get => exe; set { exe = value; Changed(); } }
         public Edge Edge { get; set; }
@@ -87,6 +88,9 @@ namespace EdgeTuck.Features
         /// <summary>v1.1: this program's tabs in this color ("#RRGGBB"); null = as in Settings.</summary>
         public string? TabColor { get => tabColor; set { tabColor = value; Changed(); Changed(nameof(TabBrush)); } }
         [JsonIgnore] public System.Windows.Media.Brush? TabBrush => TabColors.Parse(TabColor) is { } c ? new System.Windows.Media.SolidColorBrush(c) : null;
+        /// <summary>v1.1.1: this program's tab size in px; null = as in Settings.</summary>
+        public int? TabThickness { get => tabThickness; set { tabThickness = value; Changed(); } }
+        public int? TabLength { get => tabLength; set { tabLength = value; Changed(); } }
 
         [JsonIgnore] public string Detail => $"{Loc.T("Edge." + Edge)} · {(Monitor is null ? "" : Tucked.MonitorName(Monitor))}";
 

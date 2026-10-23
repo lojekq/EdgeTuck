@@ -42,6 +42,7 @@ public partial class RulesPage
     {
         Settings.Save();
         if (e.PropertyName == nameof(Rule.Hotkey)) TuckManager.RegisterRuleHotkeys();
+        if (e.PropertyName is nameof(Rule.TabThickness) or nameof(Rule.TabLength)) TuckManager.RefreshTabs();
     }
 
     /// <summary>v1.1: this program's tab color.</summary>
@@ -49,6 +50,14 @@ public partial class RulesPage
     {
         var r = (Rule)((FrameworkElement)sender).DataContext;
         ColorMenu.Open((FrameworkElement)sender, r.TabColor, hex => { r.TabColor = hex; TuckManager.RefreshTabs(); });
+    }
+
+    /// <summary>v1.1.1: this program's tab size; empty boxes = as in Settings.</summary>
+    void OnSizeLoaded(object sender, RoutedEventArgs e)
+    {
+        var c = (ContentControl)sender;
+        if (c.Content is not null || c.DataContext is not Rule r) return; // Sync() resets the list: old items load with a placeholder
+        c.Content = SettingsSection.TabSizeBoxes(r.TabThickness, r.TabLength, inherit: true, (a, b) => { r.TabThickness = a; r.TabLength = b; });
     }
 
     void OnDelete(object sender, RoutedEventArgs e) => TuckManager.RemoveRule(((Rule)((FrameworkElement)sender).DataContext).Exe);
